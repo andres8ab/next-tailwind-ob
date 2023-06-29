@@ -37,3 +37,7 @@ utils/usersData.js
 
 productsData2.js
 usersData2.js
+pages/api/importProducts.js
+pages/api/importUsers.js
+pages/api/seedProducts.js
+pages/api/seedUsers.js
