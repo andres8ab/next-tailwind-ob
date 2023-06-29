@@ -41,3 +41,4 @@ pages/api/importProducts.js
 pages/api/importUsers.js
 pages/api/seedProducts.js
 pages/api/seedUsers.js
+pages/api/seedOneUser.js

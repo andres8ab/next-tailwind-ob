@@ -1,3 +1,4 @@
+import { useRouter } from 'next/router';
 const { default: axios } = require('axios');
 const { default: Link } = require('next/link');
 const { useReducer, useEffect } = require('react');
@@ -13,6 +14,12 @@ function reducer(state, action) {
       return { ...state, loading: false, users: action.payload, error: '' };
     case 'FETCH_FAIL':
       return { ...state, loading: false, error: action.payload };
+    case 'CREATE_REQUEST':
+      return { ...state, loadingCreate: true };
+    case 'CREATE_SUCCESS':
+      return { ...state, loadingCreate: false };
+    case 'CREATE_FAIL':
+      return { ...state, loadingCreate: false };
     case 'DELETE_REQUEST':
       return { ...state, loadingDelete: true };
     case 'DELETE_SUCCESS':
@@ -27,12 +34,31 @@ function reducer(state, action) {
 }
 
 function AdminUsersScreen() {
-  const [{ loading, error, users, successDelete, loadingDelete }, dispatch] =
-    useReducer(reducer, {
-      loading: true,
-      users: [],
-      error: '',
-    });
+  const router = useRouter();
+  const [
+    { loading, error, users, successDelete, loadingCreate, loadingDelete },
+    dispatch,
+  ] = useReducer(reducer, {
+    loading: true,
+    users: [],
+    error: '',
+  });
+
+  const createHandler = async () => {
+    if (!window.confirm('Estas seguro?')) {
+      return;
+    }
+    try {
+      dispatch({ type: 'CREATE_REQUEST' });
+      const { data } = await axios.post(`/api/admin/users`);
+      dispatch({ type: 'CREATE_SUCCESS' });
+      toast.success('Usuario creado correctamente');
+      router.push(`/admin/user/${data.user._id}`);
+    } catch (err) {
+      dispatch({ type: 'CREATE_FAIL' });
+      toast.error(getError(err));
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,6 +116,13 @@ function AdminUsersScreen() {
         <div className="overflow-x-auto md:col-span-3">
           <h1 className="mb-4 text-xl">Usuarios</h1>
           {loadingDelete && <div>Eliminando...</div>}
+          <button
+            disabled={loadingCreate}
+            onClick={createHandler}
+            className="primary-button"
+          >
+            {loadingCreate ? 'Cargando' : 'Crear'}
+          </button>
           {loading ? (
             <div>Cargando...</div>
           ) : error ? (

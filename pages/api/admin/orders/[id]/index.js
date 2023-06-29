@@ -56,11 +56,9 @@ const handler = async (req, res) => {
 
     await order.deleteOne();
     await db.disconnect();
-    res.send({ message: 'Usuario Eliminado' });
     res.send({ message: 'Orden Eliminada' });
   } else {
     await db.disconnect();
-    res.status(404).send({ message: 'Usuario no encontrado' });
     res.status(404).send({ message: 'Orden no encontrada' });
   }
 };

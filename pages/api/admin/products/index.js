@@ -18,15 +18,15 @@ const handler = async (req, res) => {
 const postHandler = async (req, res) => {
   await db.connect();
   const newProduct = new Product({
-    name: 'sample name',
-    slug: 'sample-name-' + Math.random(),
-    image: '/images/shirt1.jpg',
-    price: 0,
-    category: 'sample category',
-    brand: 'sample brand',
-    countInStock: 0,
-    description: 'sample description',
-    group: 'sample group',
+    name: 'AL-200 Alternador Tesla',
+    slug: '1_AL-200',
+    image: '/images/AL-200.png',
+    price: 500000,
+    category: 'Alternador',
+    brand: 'OB',
+    countInStock: 50,
+    description: '12V 100A',
+    group: 'eob',
   });
 
   const product = await newProduct.save();

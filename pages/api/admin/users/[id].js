@@ -31,7 +31,12 @@ const putHandler = async (req, res) => {
   const user = await User.findById(req.query.id);
   if (user) {
     user.name = req.body.name;
-    user.isAdmin = Boolean(req.body.isAdmin);
+    user.username = req.body.username;
+    user.shippingAddress.fullName = req.body.fullName;
+    user.shippingAddress.address = req.body.address;
+    user.shippingAddress.nit = req.body.nit;
+    user.shippingAddress.city = req.body.city;
+    user.isClient = Boolean(req.body.isClient);
     await user.save();
     await db.disconnect();
     res.send({ message: 'Usuario actualizado correctamente' });

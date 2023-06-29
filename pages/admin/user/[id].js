@@ -60,7 +60,12 @@ function AdminUserEdit() {
 
         dispatch({ type: 'FETCH_SUCCESS' });
         setValue('name', data.name);
-        setValue('isAdmin', data.isAdmin);
+        setValue('username', data.username);
+        setValue('fullName', data.shippingAddress.fullName);
+        setValue('address', data.shippingAddress.address);
+        setValue('nit', data.shippingAddress.nit);
+        setValue('city', data.shippingAddress.city);
+        setValue('isClient', data.isClient);
       } catch (err) {
         dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
       }
@@ -68,12 +73,25 @@ function AdminUserEdit() {
     fetchData();
   }, [userId, setValue]);
 
-  const submitHandler = async ({ name, isAdmin }) => {
+  const submitHandler = async ({
+    name,
+    username,
+    fullName,
+    address,
+    nit,
+    city,
+    isClient,
+  }) => {
     try {
       dispatch({ type: 'UPDATE_REQUEST' });
       await axios.put(`/api/admin/users/${userId}`, {
         name,
-        isAdmin,
+        username,
+        fullName,
+        address,
+        nit,
+        city,
+        isClient,
       });
       dispatch({ type: 'UPDATE_SUCCESS' });
       toast.success('User updated successfully');
@@ -131,16 +149,91 @@ function AdminUserEdit() {
                 )}
               </div>
               <div className="mb-4">
-                <label htmlFor="isAdmin">Es Admin</label>
+                <label htmlFor="username">usuario</label>
+                <input
+                  type="text"
+                  className="w-full"
+                  id="username"
+                  autoFocus
+                  {...register('username', {
+                    required: 'Ingrese nit sin digito',
+                  })}
+                />
+                {errors.username && (
+                  <div className="text-red-500">{errors.username.message}</div>
+                )}
+              </div>
+              <div className="mb-4">
+                <label htmlFor="fullName">Nombre comercial</label>
+                <input
+                  type="text"
+                  className="w-full"
+                  id="fullName"
+                  autoFocus
+                  {...register('fullName', {
+                    required: 'Ingrese el nombre',
+                  })}
+                />
+                {errors.fullName && (
+                  <div className="text-red-500">{errors.fullName.message}</div>
+                )}
+              </div>
+              <div className="mb-4">
+                <label htmlFor="address">Dirección</label>
+                <input
+                  type="text"
+                  className="w-full"
+                  id="address"
+                  autoFocus
+                  {...register('address', {
+                    required: 'Ingrese la dirección',
+                  })}
+                />
+                {errors.address && (
+                  <div className="text-red-500">{errors.address.message}</div>
+                )}
+              </div>
+              <div className="mb-4">
+                <label htmlFor="nit">Nit</label>
+                <input
+                  type="text"
+                  className="w-full"
+                  id="nit"
+                  autoFocus
+                  {...register('nit', {
+                    required: 'Ingrese el nit con digito',
+                  })}
+                />
+                {errors.nit && (
+                  <div className="text-red-500">{errors.nit.message}</div>
+                )}
+              </div>
+              <div className="mb-4">
+                <label htmlFor="city">Ciudad</label>
+                <input
+                  type="text"
+                  className="w-full"
+                  id="city"
+                  autoFocus
+                  {...register('city', {
+                    required: 'Ingrese la ciudad',
+                  })}
+                />
+                {errors.city && (
+                  <div className="text-red-500">{errors.city.message}</div>
+                )}
+              </div>
+              <div className="mb-4">
+                <label htmlFor="isClient">Es Cliente</label>
                 <input
                   type="checkbox"
                   className="w-full"
-                  id="isAdmin"
-                  {...register('isAdmin')}
+                  id="isClient"
+                  {...register('isClient')}
                 />
 
-                {errors.isAdmin && (
-                  <div className="text-red-500">{errors.isAdmin.message}</div>
+                {errors.isClient && (
+                  <div className="text-red-500">{errors.isClient.message}</div>
                 )}
               </div>
               <div className="mb-4">
