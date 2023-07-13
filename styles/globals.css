@@ -61,5 +61,5 @@ textarea {
 }
 
 .alert-pay {
-  @apply my-3 rounded-lg bg-blue-300 p-3 text-blue-700;
+  @apply my-3 rounded-lg bg-blue-300 p-3 text-blue-700 cursor-pointer;
 }

@@ -36,7 +36,7 @@ const handler = async (req, res) => {
     // res.json({
     //   id: response.body.id,
     // });
-    res.status(200).send({ id: response.body.id });
+    res.status(200).send({ url: response.body.init_point });
   } catch (error) {
     console.log(error);
   }

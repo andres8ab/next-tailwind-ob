@@ -3,11 +3,12 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useEffect, useReducer, useState } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import Layout from '@/components/Layout';
 import { getError } from '@/utils/error';
 import { toast } from 'react-toastify';
-import { initMercadoPago, Wallet } from '@mercadopago/sdk-react';
+import MercadoPagoButton from '@/components/MercadoPagoButton';
+// import { initMercadoPago, Wallet } from '@mercadopago/sdk-react';
 
 function reducer(state, action) {
   switch (action.type) {
@@ -31,8 +32,8 @@ function reducer(state, action) {
 }
 
 function OrderScreen() {
-  const [preferenceId, setPreferenceId] = useState(null);
-  initMercadoPago('APP_USR-d9cf7890-d97e-4104-989a-607016a300af');
+  // const [preferenceId, setPreferenceId] = useState(null);
+  // initMercadoPago('APP_USR-d9cf7890-d97e-4104-989a-607016a300af');
 
   const { data: session } = useSession();
 
@@ -91,26 +92,26 @@ function OrderScreen() {
     }
   }
 
-  const createPreference = async () => {
-    try {
-      const response = await axios.post('/api/orders/mercadopago', {
-        description: orderId,
-        price: totalPrice,
-        quantity: 1,
-      });
-      const { id } = response.data;
-      return id;
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // const createPreference = async () => {
+  //   try {
+  //     const response = await axios.post('/api/orders/mercadopago', {
+  //       description: orderId,
+  //       price: totalPrice,
+  //       quantity: 1,
+  //     });
+  //     const { id } = response.data;
+  //     return id;
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
-  const handleBuy = async () => {
-    const id = await createPreference();
-    if (id) {
-      setPreferenceId(id);
-    }
-  };
+  // const handleBuy = async () => {
+  //   const id = await createPreference();
+  //   if (id) {
+  //     setPreferenceId(id);
+  //   }
+  // };
 
   return (
     <Layout title={`Orden ${orderId}`}>
@@ -142,14 +143,15 @@ function OrderScreen() {
               ) : (
                 <div>
                   <div className="alert-error">No Pagado</div>
-                  <button className="alert-pay" onClick={handleBuy}>
+                  <MercadoPagoButton product={order} />
+                  {/* <button className="alert-pay" onClick={handleBuy}>
                     Pagar
-                  </button>
-                  {preferenceId && (
+                  </button> */}
+                  {/* {preferenceId && (
                     <Wallet
                       initialization={{ preferenceId, redirectMode: 'modal' }}
                     />
-                  )}
+                  )} */}
                 </div>
               )}
             </div>
