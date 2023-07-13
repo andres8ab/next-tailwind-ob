@@ -32,10 +32,11 @@ const handler = async (req, res) => {
       binary_mode: true,
     };
     const response = await mercadopago.preferences.create(preference);
-    global.id = response.body.id;
-    res.json({
-      id: response.body.id,
-    });
+    // global.id = response.body.id;
+    // res.json({
+    //   id: response.body.id,
+    // });
+    res.status(200).send({ id: response.body.id });
   } catch (error) {
     console.log(error);
   }
