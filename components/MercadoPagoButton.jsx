@@ -7,20 +7,13 @@ const MercadoPagoButton = ({ product }) => {
   useEffect(() => {
     const generateLink = async () => {
       try {
-        const data = {
-          description: product.orderId,
-          price: product.totalPrice,
-          quantity: 1,
-        };
-
-        const config = {
-          timeout: 10000,
-        };
-
         const { data: preference } = await axios.post(
           '/api/orders/mercadopago',
-          data,
-          config
+          {
+            description: product.orderId,
+            price: product.totalPrice,
+            quantity: 1,
+          }
         );
         setUrl(preference.url);
       } catch (err) {
