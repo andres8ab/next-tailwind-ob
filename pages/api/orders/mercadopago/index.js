@@ -36,7 +36,7 @@ const handler = async (req, res) => {
     // });
     res.status(200).send({ url: response.body.init_point });
   } catch (error) {
-    console.log(error);
+    console.error('checkout error', error);
   }
 };
 export default handler;
