@@ -9,7 +9,7 @@ const handler = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  const URL = 'https://next-tailwind-ob.vercel.app';
+  const URL = 'https://next-tailwind-ob.vercel.app/';
   // Crea un objeto de preferencia
   try {
     let preference = {
