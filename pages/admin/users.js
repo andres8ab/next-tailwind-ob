@@ -146,6 +146,8 @@ function AdminUsersScreen() {
                     <th className="p-5 text-left">NOMBRE</th>
                     <th className="p-5 text-left">USUARIO</th>
                     <th className="p-5 text-left">ADMIN</th>
+                    <th className="p-5 text-left">VENDEDOR</th>
+                    <th className="p-5 text-left">DESCUENTO</th>
                     <th className="p-5 text-left">CLIENTE</th>
                     <th className="p-5 text-left">ACCIONES</th>
                   </tr>
@@ -157,6 +159,8 @@ function AdminUsersScreen() {
                       <td className="p-5">{user.name}</td>
                       <td className="p-5">{user.username}</td>
                       <td className="p-5">{user.isAdmin ? 'SI' : 'NO'}</td>
+                      <td className="p-5">{user.seller}</td>
+                      <td className="p-5">{user.clientDiscount}</td>
                       <td className="p-5">{user.isClient ? 'SI' : 'NO'}</td>
                       <td className="p-5">
                         <Link

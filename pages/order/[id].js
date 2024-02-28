@@ -1,33 +1,33 @@
-import axios from 'axios';
-import { useSession } from 'next-auth/react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import React, { useEffect, useReducer } from 'react';
-import Layout from '@/components/Layout';
-import { getError } from '@/utils/error';
-import { toast } from 'react-toastify';
-import MercadoPagoButton from '@/components/MercadoPagoButton';
+import axios from 'axios'
+import { useSession } from 'next-auth/react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
+import React, { useEffect, useReducer } from 'react'
+import Layout from '@/components/Layout'
+import { getError } from '@/utils/error'
+import { toast } from 'react-toastify'
+import MercadoPagoButton from '@/components/MercadoPagoButton'
 // import { initMercadoPago, Wallet } from '@mercadopago/sdk-react';
 
 function reducer(state, action) {
   switch (action.type) {
     case 'FETCH_REQUEST':
-      return { ...state, loading: true, error: '' };
+      return { ...state, loading: true, error: '' }
     case 'FETCH_SUCCESS':
-      return { ...state, loading: false, order: action.payload, error: '' };
+      return { ...state, loading: false, order: action.payload, error: '' }
     case 'FETCH_FAIL':
-      return { ...state, loading: false, error: action.payload };
+      return { ...state, loading: false, error: action.payload }
     case 'DELIVER_REQUEST':
-      return { ...state, loadingDeliver: true };
+      return { ...state, loadingDeliver: true }
     case 'DELIVER_SUCCESS':
-      return { ...state, loadingDeliver: false, successDeliver: true };
+      return { ...state, loadingDeliver: false, successDeliver: true }
     case 'DELIVER_FAIL':
-      return { ...state, loadingDeliver: false };
+      return { ...state, loadingDeliver: false }
     case 'DELIVER_RESET':
-      return { ...state, loadingDeliver: false, successDeliver: false };
+      return { ...state, loadingDeliver: false, successDeliver: false }
     default:
-      return state;
+      return state
   }
 }
 
@@ -35,39 +35,40 @@ function OrderScreen() {
   // const [preferenceId, setPreferenceId] = useState(null);
   // initMercadoPago('APP_USR-d9cf7890-d97e-4104-989a-607016a300af');
 
-  const { data: session } = useSession();
+  const { data: session } = useSession()
 
-  const { query } = useRouter();
-  const orderId = query.id;
+  const { query } = useRouter()
+  const orderId = query.id
 
   const [{ loading, error, order, loadingDeliver, successDeliver }, dispatch] =
     useReducer(reducer, {
       loading: true,
       order: {},
       error: '',
-    });
+    })
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        dispatch({ type: 'FETCH_REQUEST' });
-        const { data } = await axios.get(`/api/orders/${orderId}`);
-        dispatch({ type: 'FETCH_SUCCESS', payload: data });
+        dispatch({ type: 'FETCH_REQUEST' })
+        const { data } = await axios.get(`/api/orders/${orderId}`)
+        dispatch({ type: 'FETCH_SUCCESS', payload: data })
       } catch (err) {
-        dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
-      }
-    };
-    if (!order._id || successDeliver || (order._id && order._id !== orderId)) {
-      fetchOrder();
-      if (successDeliver) {
-        dispatch({ type: 'DELIVER_RESET' });
+        dispatch({ type: 'FETCH_FAIL', payload: getError(err) })
       }
     }
-  }, [order._id, orderId, successDeliver]);
+    if (!order._id || successDeliver || (order._id && order._id !== orderId)) {
+      fetchOrder()
+      if (successDeliver) {
+        dispatch({ type: 'DELIVER_RESET' })
+      }
+    }
+  }, [order._id, orderId, successDeliver])
   const {
     shippingAddress,
     paymentMethod,
     orderItems,
     itemsPrice,
+    discountPrice,
     taxPrice,
     shippingPrice,
     totalPrice,
@@ -75,20 +76,20 @@ function OrderScreen() {
     paidAt,
     isDelivered,
     deliveredAt,
-  } = order;
+  } = order
 
   async function deliverOrderHandler() {
     try {
-      dispatch({ type: 'DELIVER_REQUEST' });
+      dispatch({ type: 'DELIVER_REQUEST' })
       const { data } = await axios.put(
         `/api/admin/orders/${order._id}/deliver`,
         {}
-      );
-      dispatch({ type: 'DELIVER_SUCCESS', payload: data });
-      toast.success('Orden entregada');
+      )
+      dispatch({ type: 'DELIVER_SUCCESS', payload: data })
+      toast.success('Orden entregada')
     } catch (err) {
-      dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
-      toast.error(getError(err));
+      dispatch({ type: 'FETCH_FAIL', payload: getError(err) })
+      toast.error(getError(err))
     }
   }
 
@@ -208,6 +209,12 @@ function OrderScreen() {
                 </li>{' '}
                 <li>
                   <div className="mb-2 flex justify-between">
+                    <div>Dcto.</div>
+                    <div>${discountPrice}</div>
+                  </div>
+                </li>
+                <li>
+                  <div className="mb-2 flex justify-between">
                     <div>Iva</div>
                     <div>${taxPrice}</div>
                   </div>
@@ -241,8 +248,8 @@ function OrderScreen() {
         </div>
       )}
     </Layout>
-  );
+  )
 }
 
-OrderScreen.auth = true;
-export default OrderScreen;
+OrderScreen.auth = true
+export default OrderScreen

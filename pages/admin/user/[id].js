@@ -1,77 +1,79 @@
-import axios from 'axios';
-import { useRouter } from 'next/router';
-import React, { useEffect, useReducer } from 'react';
-import { getError } from '../../../utils/error';
-import Layout from '../../../components/Layout';
-import { useForm } from 'react-hook-form';
-import { toast } from 'react-toastify';
-import Link from 'next/link';
+import axios from 'axios'
+import { useRouter } from 'next/router'
+import React, { useEffect, useReducer } from 'react'
+import { getError } from '../../../utils/error'
+import Layout from '../../../components/Layout'
+import { useForm } from 'react-hook-form'
+import { toast } from 'react-toastify'
+import Link from 'next/link'
 
 function reducer(state, action) {
   switch (action.type) {
     case 'FETCH_REQUEST':
-      return { ...state, loading: true, error: '' };
+      return { ...state, loading: true, error: '' }
     case 'FETCH_SUCCESS':
-      return { ...state, loading: false, error: '' };
+      return { ...state, loading: false, error: '' }
     case 'FETCH_FAIL':
-      return { ...state, loading: false, error: action.payload };
+      return { ...state, loading: false, error: action.payload }
     case 'UPDATE_REQUEST':
-      return { ...state, loadingUpdate: true, errorUpdate: '' };
+      return { ...state, loadingUpdate: true, errorUpdate: '' }
     case 'UPDATE_SUCCESS':
-      return { ...state, loadingUpdate: false, errorUpdate: '' };
+      return { ...state, loadingUpdate: false, errorUpdate: '' }
     case 'UPDATE_FAIL':
-      return { ...state, loadingUpdate: false, errorUpdate: action.payload };
+      return { ...state, loadingUpdate: false, errorUpdate: action.payload }
     case 'UPLOAD_REQUEST':
-      return { ...state, loadingUpload: true, errorUpload: '' };
+      return { ...state, loadingUpload: true, errorUpload: '' }
     case 'UPLOAD_SUCCESS':
       return {
         ...state,
         loadingUpload: false,
         errorUpload: '',
-      };
+      }
     case 'UPLOAD_FAIL':
-      return { ...state, loadingUpload: false, errorUpload: action.payload };
+      return { ...state, loadingUpload: false, errorUpload: action.payload }
 
     default:
-      return state;
+      return state
   }
 }
 
 function AdminUserEdit() {
-  const { query } = useRouter();
-  const userId = query.id;
+  const { query } = useRouter()
+  const userId = query.id
   const [{ loading, error, loadingUpdate }, dispatch] = useReducer(reducer, {
     loading: true,
     error: '',
-  });
+  })
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-  } = useForm();
-  const router = useRouter();
+  } = useForm()
+  const router = useRouter()
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        dispatch({ type: 'FETCH_REQUEST' });
-        const { data } = await axios.get(`/api/admin/users/${userId}`);
+        dispatch({ type: 'FETCH_REQUEST' })
+        const { data } = await axios.get(`/api/admin/users/${userId}`)
 
-        dispatch({ type: 'FETCH_SUCCESS' });
-        setValue('name', data.name);
-        setValue('username', data.username);
-        setValue('fullName', data.shippingAddress.fullName);
-        setValue('address', data.shippingAddress.address);
-        setValue('nit', data.shippingAddress.nit);
-        setValue('city', data.shippingAddress.city);
-        setValue('isClient', data.isClient);
+        dispatch({ type: 'FETCH_SUCCESS' })
+        setValue('name', data.name)
+        setValue('username', data.username)
+        setValue('fullName', data.shippingAddress.fullName)
+        setValue('address', data.shippingAddress.address)
+        setValue('nit', data.shippingAddress.nit)
+        setValue('city', data.shippingAddress.city)
+        setValue('seller', data.seller)
+        setValue('clientDiscount', data.clientDiscount)
+        setValue('isClient', data.isClient)
       } catch (err) {
-        dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
+        dispatch({ type: 'FETCH_FAIL', payload: getError(err) })
       }
-    };
-    fetchData();
-  }, [userId, setValue]);
+    }
+    fetchData()
+  }, [userId, setValue])
 
   const submitHandler = async ({
     name,
@@ -80,10 +82,12 @@ function AdminUserEdit() {
     address,
     nit,
     city,
+    seller,
+    clientDiscount,
     isClient,
   }) => {
     try {
-      dispatch({ type: 'UPDATE_REQUEST' });
+      dispatch({ type: 'UPDATE_REQUEST' })
       await axios.put(`/api/admin/users/${userId}`, {
         name,
         username,
@@ -91,16 +95,18 @@ function AdminUserEdit() {
         address,
         nit,
         city,
+        seller,
+        clientDiscount,
         isClient,
-      });
-      dispatch({ type: 'UPDATE_SUCCESS' });
-      toast.success('User updated successfully');
-      router.push('/admin/users');
+      })
+      dispatch({ type: 'UPDATE_SUCCESS' })
+      toast.success('User updated successfully')
+      router.push('/admin/users')
     } catch (err) {
-      dispatch({ type: 'UPDATE_FAIL', payload: getError(err) });
-      toast.error(getError(err));
+      dispatch({ type: 'UPDATE_FAIL', payload: getError(err) })
+      toast.error(getError(err))
     }
-  };
+  }
   return (
     <Layout title={`Editar Usuario ${userId}`}>
       <div className="grid md:grid-cols-4 md:gap-5">
@@ -224,6 +230,43 @@ function AdminUserEdit() {
                 )}
               </div>
               <div className="mb-4">
+                <label htmlFor="seller">Vendedor</label>
+                <select
+                  type="text"
+                  className="w-full"
+                  id="seller"
+                  autoFocus
+                  {...register('seller', {
+                    required: 'Seleccione el vendedor',
+                  })}
+                >
+                  <option value="">Selecciona...</option>
+                  <option value="Carlos Robledo">Carlos Robledo</option>
+                  <option value="Andres Ochoa">Andres Ochoa</option>
+                  <option value="Carlos Palacio">Carlos Palacio</option>
+                </select>
+                {errors.seller && (
+                  <div className="text-red-500">{errors.seller.message}</div>
+                )}
+              </div>
+              <div className="mb-4">
+                <label htmlFor="clientDiscount">Descuento</label>
+                <input
+                  type="text"
+                  className="w-full"
+                  id="clientDiscount"
+                  autoFocus
+                  {...register('clientDiscount', {
+                    required: 'Ingrese el descuento',
+                  })}
+                />
+                {errors.clientDiscount && (
+                  <div className="text-red-500">
+                    {errors.clientDiscount.message}
+                  </div>
+                )}
+              </div>
+              <div className="mb-4">
                 <label htmlFor="isClient">Es Cliente</label>
                 <input
                   type="checkbox"
@@ -249,8 +292,8 @@ function AdminUserEdit() {
         </div>
       </div>
     </Layout>
-  );
+  )
 }
 
-AdminUserEdit.auth = { adminOnly: true };
-export default AdminUserEdit;
+AdminUserEdit.auth = { adminOnly: true }
+export default AdminUserEdit

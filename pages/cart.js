@@ -1,36 +1,36 @@
-import Layout from '@/components/Layout';
-import { Store } from '@/utils/Store';
-import Image from 'next/image';
-import Link from 'next/link';
-import React, { useContext } from 'react';
-import XCricleIcon from '@heroicons/react/24/outline/XCircleIcon';
-import { useRouter } from 'next/router';
-import dynamic from 'next/dynamic';
-import axios from 'axios';
-import { toast } from 'react-toastify';
+import Layout from '@/components/Layout'
+import { Store } from '@/utils/Store'
+import Image from 'next/image'
+import Link from 'next/link'
+import React, { useContext } from 'react'
+import XCricleIcon from '@heroicons/react/24/outline/XCircleIcon'
+import { useRouter } from 'next/router'
+import dynamic from 'next/dynamic'
+import axios from 'axios'
+import { toast } from 'react-toastify'
 
 function CartScreen() {
-  const router = useRouter();
-  const { state, dispatch } = useContext(Store);
+  const router = useRouter()
+  const { state, dispatch } = useContext(Store)
   const {
     cart: { cartItems },
-  } = state;
+  } = state
   const removeItemHandler = (item) => {
-    dispatch({ type: 'CART_REMOVE_ITEM', payload: item });
-  };
+    dispatch({ type: 'CART_REMOVE_ITEM', payload: item })
+  }
   const updateCartHandler = async (item, qty) => {
-    const quantity = Number(qty);
-    const { data } = await axios.get(`/api/products/${item._id}`);
+    const quantity = Number(qty)
+    const { data } = await axios.get(`/api/products/${item._id}`)
     if (data.countInStock < quantity) {
-      return toast.error('Lo sentimos. El producto está agotado');
+      return toast.error('Lo sentimos. El producto está agotado')
     }
-    dispatch({ type: 'CART_ADD_ITEM', payload: { ...item, quantity } });
-    toast.success('Producto actualizado en el carrito');
-  };
+    dispatch({ type: 'CART_ADD_ITEM', payload: { ...item, quantity } })
+    toast.success('Producto actualizado en el carrito')
+  }
 
   const proceedOrderHandler = () => {
-    router.push('login?redirect=/shipping');
-  };
+    router.push('login?redirect=/shipping')
+  }
 
   return (
     <Layout title="Carrito">
@@ -119,7 +119,7 @@ function CartScreen() {
         </div>
       )}
     </Layout>
-  );
+  )
 }
 
-export default dynamic(() => Promise.resolve(CartScreen), { ssr: false });
+export default dynamic(() => Promise.resolve(CartScreen), { ssr: false })

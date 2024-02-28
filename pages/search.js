@@ -1,16 +1,16 @@
-import axios from 'axios';
-import { useRouter } from 'next/router';
-import React, { useContext } from 'react';
-import { toast } from 'react-toastify';
-import Layout from '@/components/Layout';
-import { Store } from '@/utils/Store';
-import XCircleIcon from '@heroicons/react/24/outline/XCircleIcon';
-import ProductItem from '@/components/ProductItem';
-import Product from '@/models/Product';
-import db from '@/utils/db';
-import SearchBar from '@/components/SearchBar';
+import axios from 'axios'
+import { useRouter } from 'next/router'
+import React, { useContext } from 'react'
+import { toast } from 'react-toastify'
+import Layout from '@/components/Layout'
+import { Store } from '@/utils/Store'
+import XCircleIcon from '@heroicons/react/24/outline/XCircleIcon'
+import ProductItem from '@/components/ProductItem'
+import Product from '@/models/Product'
+import db from '@/utils/db'
+import SearchBar from '@/components/SearchBar'
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 6
 
 const prices = [
   {
@@ -25,10 +25,10 @@ const prices = [
     name: '$200001 to $1000000',
     value: '200001-1000000',
   },
-];
+]
 
 export default function Search(props) {
-  const router = useRouter();
+  const router = useRouter()
 
   const {
     query = 'all',
@@ -37,9 +37,9 @@ export default function Search(props) {
     price = 'all',
     sort = 'featured',
     page = 1,
-  } = router.query;
+  } = router.query
 
-  const { products, countProducts, categories, brands, pages } = props;
+  const { products, countProducts, categories, brands, pages } = props
 
   const filterSearch = ({
     page,
@@ -51,49 +51,49 @@ export default function Search(props) {
     searchQuery,
     price,
   }) => {
-    const { query } = router;
-    if (page) query.page = page;
-    if (searchQuery) query.searchQuery = searchQuery;
-    if (sort) query.sort = sort;
-    if (category) query.category = category;
-    if (brand) query.brand = brand;
-    if (price) query.price = price;
-    if (min) query.min ? query.min : query.min === 0 ? 0 : min;
-    if (max) query.max ? query.max : query.max === 0 ? 0 : max;
+    const { query } = router
+    if (page) query.page = page
+    if (searchQuery) query.searchQuery = searchQuery
+    if (sort) query.sort = sort
+    if (category) query.category = category
+    if (brand) query.brand = brand
+    if (price) query.price = price
+    if (min) query.min ? query.min : query.min === 0 ? 0 : min
+    if (max) query.max ? query.max : query.max === 0 ? 0 : max
 
     router.push({
       pathname: router.pathname,
       query: query,
-    });
-  };
+    })
+  }
   const categoryHandler = (e) => {
-    filterSearch({ category: e.target.value });
-  };
+    filterSearch({ category: e.target.value })
+  }
   const pageHandler = (page) => {
-    filterSearch({ page });
-  };
+    filterSearch({ page })
+  }
   const brandHandler = (e) => {
-    filterSearch({ brand: e.target.value });
-  };
+    filterSearch({ brand: e.target.value })
+  }
   const sortHandler = (e) => {
-    filterSearch({ sort: e.target.value });
-  };
+    filterSearch({ sort: e.target.value })
+  }
   const priceHandler = (e) => {
-    filterSearch({ price: e.target.value });
-  };
+    filterSearch({ price: e.target.value })
+  }
 
-  const { state, dispatch } = useContext(Store);
+  const { state, dispatch } = useContext(Store)
   const addToCartHandler = async (product) => {
-    const existItem = state.cart.cartItems.find((x) => x._id === product._id);
-    const quantity = existItem ? existItem.quantity + 1 : 1;
-    const { data } = await axios.get(`/api/products/${product._id}`);
+    const existItem = state.cart.cartItems.find((x) => x._id === product._id)
+    const quantity = existItem ? existItem.quantity + 1 : 1
+    const { data } = await axios.get(`/api/products/${product._id}`)
     if (data.countInStock < quantity) {
-      toast.error('Lo sentimos. El producto está agotado');
-      return;
+      toast.error('Lo sentimos. El producto está agotado')
+      return
     }
-    dispatch({ type: 'CART_ADD_ITEM', payload: { ...product, quantity } });
-    router.push('/cart');
-  };
+    dispatch({ type: 'CART_ADD_ITEM', payload: { ...product, quantity } })
+    router.push('/cart')
+  }
   return (
     <Layout title="buscar">
       <div className="flex md:hidden">
@@ -171,7 +171,7 @@ export default function Search(props) {
             </div>
           </div>
           <div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {products.map((product) => (
                 <ProductItem
                   key={product._id}
@@ -199,17 +199,17 @@ export default function Search(props) {
         </div>
       </div>
     </Layout>
-  );
+  )
 }
 
 export async function getServerSideProps({ query }) {
-  const pageSize = query.pageSize || PAGE_SIZE;
-  const page = query.page || 1;
-  const category = query.category || '';
-  const brand = query.brand || '';
-  const price = query.price || '';
-  const sort = query.sort || '';
-  const searchQuery = query.query || '';
+  const pageSize = query.pageSize || PAGE_SIZE
+  const page = query.page || 1
+  const category = query.category || ''
+  const brand = query.brand || ''
+  const price = query.price || ''
+  const sort = query.sort || ''
+  const searchQuery = query.query || ''
 
   const queryFilter =
     searchQuery && searchQuery !== 'all'
@@ -219,9 +219,9 @@ export async function getServerSideProps({ query }) {
             $options: 'i',
           },
         }
-      : {};
-  const categoryFilter = category && category !== 'all' ? { category } : {};
-  const brandFilter = brand && brand !== 'all' ? { brand } : {};
+      : {}
+  const categoryFilter = category && category !== 'all' ? { category } : {}
+  const brandFilter = brand && brand !== 'all' ? { brand } : {}
   const priceFilter =
     price && price !== 'all'
       ? {
@@ -230,7 +230,7 @@ export async function getServerSideProps({ query }) {
             $lte: Number(price.split('-')[1]),
           },
         }
-      : {};
+      : {}
   const order =
     sort === 'featured'
       ? { isFeatured: -1 }
@@ -240,11 +240,11 @@ export async function getServerSideProps({ query }) {
       ? { price: -1 }
       : sort === 'newest'
       ? { createdAt: -1 }
-      : { slug: 1 };
+      : { slug: 1 }
 
-  await db.connect();
-  const categories = await Product.find().distinct('category');
-  const brands = await Product.find().distinct('brand');
+  await db.connect()
+  const categories = await Product.find().distinct('category')
+  const brands = await Product.find().distinct('brand')
   const productDocs = await Product.find({
     ...queryFilter,
     ...categoryFilter,
@@ -254,15 +254,15 @@ export async function getServerSideProps({ query }) {
     .sort(order)
     .skip(pageSize * (page - 1))
     .limit(pageSize)
-    .lean();
+    .lean()
   const countProducts = await Product.countDocuments({
     ...queryFilter,
     ...categoryFilter,
     ...priceFilter,
     ...brandFilter,
-  });
-  await db.disconnect();
-  const products = productDocs.map(db.convertDocToObj);
+  })
+  await db.disconnect()
+  const products = productDocs.map(db.convertDocToObj)
 
   return {
     props: {
@@ -273,5 +273,5 @@ export async function getServerSideProps({ query }) {
       categories,
       brands,
     },
-  };
+  }
 }
