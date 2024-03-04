@@ -1,7 +1,6 @@
 import Order from '@/models/Order'
 import db from '@/utils/db'
 import { getToken } from 'next-auth/jwt'
-import { mailOptions, transporter } from '@/utils/nodemailer'
 import Product from '@/models/Product'
 
 const generateEmailContent = (data) => {
@@ -130,6 +129,27 @@ const updateCountInStockForCartItems = async (cartItems) => {
     throw new Error('Failed to update stock count: ' + error.message)
   }
 }
+/////////////////////////////////////////////////////////////////////////////////////
+import nodemailer from 'nodemailer'
+
+const email = process.env.EMAIL
+const pass = process.env.EMAIL_PASS
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: email,
+    pass,
+  },
+})
+
+function emailDestination(seller) {
+  if (seller === 'Carlos Robledo') {
+    return 'ochoabawab@gmail.com, comercialcob@gmail.com, importacioneseob@gmail.com, carlor918@gmail.com'
+  } else {
+    return 'ochoabawab@gmail.com, comercialcob@gmail.com, importacioneseob@gmail.com'
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -144,7 +164,8 @@ const handler = async (req, res) => {
     user: user._id,
   })
   await transporter.sendMail({
-    ...mailOptions,
+    from: email,
+    to: emailDestination(req.body.seller),
     html: generateEmailContent(req.body),
     subject: req.body.shippingAddress.fullName,
   })
