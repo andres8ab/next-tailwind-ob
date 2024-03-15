@@ -28,7 +28,7 @@ const generateEmailContent = (data) => {
     <td style="border-bottom:1px solid;
   padding:1rem;" align="center">${item.quantity}</td>
     <td style="border-bottom:1px solid;
-  padding:1rem;" align="right"> $${item.price.toFixed(2)}</td>
+  padding:1rem;" align="right"> $${(item.price * item.quantity).toFixed(2)}</td>
     </tr>
   `
     )
@@ -78,6 +78,8 @@ const generateEmailContent = (data) => {
   <td align="right">${data.paymentMethod}</td>
   </tr>
   </table>
+  <h2>Comentarios</h2>
+  <p>${data.comment}</p>
   <h2>Direccion Envío</h2>
   <p>
   ${data.shippingAddress.fullName},<br/>

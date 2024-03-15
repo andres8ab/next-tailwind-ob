@@ -29,6 +29,7 @@ const orderSchema = new mongoose.Schema(
     paidAt: { type: Date },
     deliveredAt: { type: Date },
     seller: { type: String, required: true },
+    comment: { type: String, required: true },
   },
   {
     timestamps: true,

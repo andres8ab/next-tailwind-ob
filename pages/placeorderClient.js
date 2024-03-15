@@ -70,6 +70,8 @@ export default function PlaceorderClientScreen() {
 
   const [sendLoading, setSendLoading] = useState(false)
 
+  const [comment, setComment] = useState('')
+
   const placeOrderHandler = async () => {
     try {
       setSendLoading(true)
@@ -83,6 +85,7 @@ export default function PlaceorderClientScreen() {
         discountPrice,
         totalPrice,
         seller,
+        comment,
       })
       setSendLoading(false)
       dispatch({ type: 'CART_CLEAR_ITEMS' })
@@ -172,6 +175,16 @@ export default function PlaceorderClientScreen() {
               </table>
               <div>
                 <Link href="/cart">Editar</Link>
+              </div>
+            </div>
+            <div className="card p-5">
+              <h2 className="mb-2 text-xl">Comentarios</h2>
+              <div className="mb-4">
+                <input
+                  type="text"
+                  className="w-full"
+                  onChange={(e) => setComment(e.target.value)}
+                />
               </div>
             </div>
           </div>
