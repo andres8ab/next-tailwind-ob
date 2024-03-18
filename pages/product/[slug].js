@@ -36,7 +36,7 @@ export default function ProductScreen(props) {
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-blue-600 hover:text-blue-800"
+          className="btn btn-outline btn-primary btn-xs sm:btn-sm md:btn-md lg:btn-lg"
         >
           regresar
         </button>
