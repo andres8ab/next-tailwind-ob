@@ -15,12 +15,12 @@ body {
 }
 
 body {
-  @apply dark:bg-gray-900 dark:text-gray-100
+  @apply dark:text-gray-100
   bg-[url('/logos/light-bg.jpg')] dark:bg-[url('/logos/dark-bg.jpg')];
 }
 
 a {
-  @apply text-blue-600 hover:text-blue-800;
+  @apply text-blue-600 hover:text-blue-800 dark:text-teal-500 hover:dark:text-teal-700;
 }
 
 @media (prefers-color-scheme: light) {
