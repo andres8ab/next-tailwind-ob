@@ -1,31 +1,31 @@
-import { Store } from '@/utils/Store';
-import Head from 'next/head';
-import Link from 'next/link';
-import { ToastContainer } from 'react-toastify';
-import { Menu } from '@headlessui/react';
-import React, { useContext, useEffect, useState } from 'react';
-import 'react-toastify/dist/ReactToastify.css';
-import { signOut, useSession } from 'next-auth/react';
-import DropdownLink from './DropdownLink';
-import Cookies from 'js-cookie';
-import Image from 'next/image';
-import { useTheme } from 'next-themes';
-import { MoonIcon, SunIcon } from '@heroicons/react/24/solid';
-import { Bars4Icon, ShoppingCartIcon } from '@heroicons/react/24/outline';
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import SearchBar from './SearchBar';
-import dynamic from 'next/dynamic';
+import { Store } from '@/utils/Store'
+import Head from 'next/head'
+import Link from 'next/link'
+import { ToastContainer } from 'react-toastify'
+import { Menu } from '@headlessui/react'
+import React, { useContext, useEffect, useState } from 'react'
+import 'react-toastify/dist/ReactToastify.css'
+import { signOut, useSession } from 'next-auth/react'
+import DropdownLink from './DropdownLink'
+import Cookies from 'js-cookie'
+import Image from 'next/image'
+import { useTheme } from 'next-themes'
+import { MoonIcon, SunIcon } from '@heroicons/react/24/solid'
+import { Bars4Icon, ShoppingCartIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon } from '@heroicons/react/24/outline'
+import SearchBar from './SearchBar'
+import dynamic from 'next/dynamic'
 
 function Layout({ title, children }) {
-  const { systemTheme, theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { systemTheme, theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setMounted(true)
+  }, [])
   const renderThemeChanger = () => {
-    if (!mounted) return null;
-    const currentTheme = theme === 'system' ? systemTheme : theme;
+    if (!mounted) return null
+    const currentTheme = theme === 'system' ? systemTheme : theme
 
     if (currentTheme === 'dark') {
       return (
@@ -34,7 +34,7 @@ function Layout({ title, children }) {
           role="button"
           onClick={() => setTheme('light')}
         />
-      );
+      )
     } else {
       return (
         <MoonIcon
@@ -42,30 +42,30 @@ function Layout({ title, children }) {
           role="button"
           onClick={() => setTheme('dark')}
         />
-      );
+      )
     }
-  };
+  }
 
-  const { status, data: session } = useSession();
+  const { status, data: session } = useSession()
 
-  const { state, dispatch } = useContext(Store);
-  const { cart } = state;
-  const [cartItemsCount, setCartItemsCount] = useState(0);
+  const { state, dispatch } = useContext(Store)
+  const { cart } = state
+  const [cartItemsCount, setCartItemsCount] = useState(0)
   useEffect(() => {
-    setCartItemsCount(cart.cartItems.reduce((a, c) => a + c.quantity, 0));
-  }, [cart.cartItems]);
+    setCartItemsCount(cart.cartItems.reduce((a, c) => a + c.quantity, 0))
+  }, [cart.cartItems])
 
   const logoutClickHandler = () => {
-    Cookies.remove('cart');
-    dispatch({ type: 'CART_RESET' });
-    signOut({ callbackUrl: '/login' });
-  };
+    Cookies.remove('cart')
+    dispatch({ type: 'CART_RESET' })
+    signOut({ callbackUrl: '/login' })
+  }
 
-  const [nav, setNav] = useState(false);
+  const [nav, setNav] = useState(false)
 
   const handleNav = () => {
-    setNav(!nav);
-  };
+    setNav(!nav)
+  }
 
   return (
     <div className="dark:border-gray-700 font-sans">
@@ -277,7 +277,7 @@ function Layout({ title, children }) {
         </footer>
       </div>
     </div>
-  );
+  )
 }
 
-export default dynamic(() => Promise.resolve(Layout), { ssr: false });
+export default dynamic(() => Promise.resolve(Layout), { ssr: false })

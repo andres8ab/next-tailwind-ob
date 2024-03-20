@@ -3,7 +3,7 @@ import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import React, { useEffect, useReducer } from 'react'
+import React, { useEffect, useReducer, useState } from 'react'
 import Layout from '@/components/Layout'
 import { getError } from '@/utils/error'
 import { toast } from 'react-toastify'
@@ -78,12 +78,17 @@ function OrderScreen() {
     deliveredAt,
   } = order
 
+  const [inputValue, setInputValue] = useState('')
+  const handleChange = (event) => {
+    setInputValue(event.target.value)
+  }
+
   async function deliverOrderHandler() {
     try {
       dispatch({ type: 'DELIVER_REQUEST' })
       const { data } = await axios.put(
         `/api/admin/orders/${order._id}/deliver`,
-        {}
+        { inputValue }
       )
       dispatch({ type: 'DELIVER_SUCCESS', payload: data })
       toast.success('Orden entregada')
@@ -131,9 +136,31 @@ function OrderScreen() {
                 {shippingAddress.address}, {shippingAddress.city}
               </div>
               {isDelivered ? (
-                <div className="alert-success">Entregado: {deliveredAt}</div>
+                <div className="alert-success">
+                  Entregado con el Numero de Guia: {deliveredAt}
+                </div>
               ) : (
-                <div className="alert-error">No Entregado</div>
+                <div>
+                  <div className="alert-error">No Entregado</div>
+                  {session.user.isAdmin && !order.isDelivered && (
+                    <li>
+                      {loadingDeliver && <div>Cargando...</div>}
+                      <input
+                        type="text"
+                        value={inputValue}
+                        onChange={handleChange}
+                        placeholder="Guia #"
+                        className="input bg-teal-600/50 input-bordered input-accent w-full max-w-xs"
+                      />
+                      <button
+                        className="btn btn-accent"
+                        onClick={deliverOrderHandler}
+                      >
+                        Enviar
+                      </button>
+                    </li>
+                  )}
+                </div>
               )}
             </div>
             <div className="card p-5">
@@ -231,17 +258,6 @@ function OrderScreen() {
                     <div>${totalPrice}</div>
                   </div>
                 </li>
-                {session.user.isAdmin && !order.isDelivered && (
-                  <li>
-                    {loadingDeliver && <div>Cargando...</div>}
-                    <button
-                      className="primary-button w-full"
-                      onClick={deliverOrderHandler}
-                    >
-                      Entregar Order
-                    </button>
-                  </li>
-                )}
               </ul>
             </div>
           </div>

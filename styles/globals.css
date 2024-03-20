@@ -15,7 +15,8 @@ body {
 }
 
 body {
-  @apply dark:bg-gray-900 dark:text-gray-100;
+  @apply dark:bg-gray-900 dark:text-gray-100
+  bg-[url('/logos/light-bg.jpg')] dark:bg-[url('/logos/dark-bg.jpg')];
 }
 
 a {

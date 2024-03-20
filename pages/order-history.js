@@ -1,19 +1,19 @@
-import Layout from '@/components/Layout';
-import { getError } from '@/utils/error';
-import axios from 'axios';
-import Link from 'next/link';
-import React, { useEffect, useReducer } from 'react';
+import Layout from '@/components/Layout'
+import { getError } from '@/utils/error'
+import axios from 'axios'
+import Link from 'next/link'
+import React, { useEffect, useReducer } from 'react'
 
 function reducer(state, action) {
   switch (action.type) {
     case 'FETCH_REQUEST':
-      return { ...state, loading: true, error: '' };
+      return { ...state, loading: true, error: '' }
     case 'FETCH_SUCCESS':
-      return { ...state, loading: false, orders: action.payload, error: '' };
+      return { ...state, loading: false, orders: action.payload, error: '' }
     case 'FETCH_FAIL':
-      return { ...state, loading: false, error: action.payload };
+      return { ...state, loading: false, error: action.payload }
     default:
-      return state;
+      return state
   }
 }
 
@@ -22,20 +22,20 @@ function OrderHistoryScreen() {
     loading: true,
     orders: [],
     error: '',
-  });
+  })
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        dispatch({ type: 'FETCH_REQUEST' });
-        const { data } = await axios.get(`/api/orders/history`);
-        dispatch({ type: 'FETCH_SUCCESS', payload: data });
+        dispatch({ type: 'FETCH_REQUEST' })
+        const { data } = await axios.get(`/api/orders/history`)
+        dispatch({ type: 'FETCH_SUCCESS', payload: data })
       } catch (err) {
-        dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
+        dispatch({ type: 'FETCH_FAIL', payload: getError(err) })
       }
-    };
-    fetchOrders();
-  }, []);
+    }
+    fetchOrders()
+  }, [])
   return (
     <Layout title="Historia Ordenes">
       <h1 className="mb-4 text-xl">Historial Ordenes</h1>
@@ -69,7 +69,7 @@ function OrderHistoryScreen() {
                   </td>
                   <td className="p-5">
                     {order.isDelivered
-                      ? `${order.deliveredAt.substring(0, 10)}`
+                      ? `${order.deliveredAt}`
                       : 'No entregado'}
                   </td>
                   <td className="p-5">
@@ -82,8 +82,8 @@ function OrderHistoryScreen() {
         </div>
       )}
     </Layout>
-  );
+  )
 }
 
-OrderHistoryScreen.auth = true;
-export default OrderHistoryScreen;
+OrderHistoryScreen.auth = true
+export default OrderHistoryScreen

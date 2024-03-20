@@ -10,6 +10,7 @@ import { toast } from 'react-toastify'
 import Tilt from 'react-parallax-tilt'
 import { motion } from 'framer-motion'
 import { fadeIn } from '@/utils/motion'
+import SearchBar from '@/components/SearchBar'
 
 const productsDetails = [
   {
@@ -85,6 +86,10 @@ export default function Home({ products }) {
   const categoryHandler = (categoryId) => {
     setSelectedCategory(categoryId)
     setModal(!modal)
+    window.scrollTo({
+      top: 0,
+      behavior: 'auto',
+    })
   }
   const { state, dispatch } = useContext(Store)
   const { cart } = state
@@ -106,6 +111,9 @@ export default function Home({ products }) {
 
   return (
     <Layout title="Home">
+      <div className="mx-auto pt-4 flex justify-center md:hidden">
+        <SearchBar />
+      </div>
       {modal ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4 mt-6">
           {productsDetails.map((productDetail, index) => (
@@ -155,17 +163,3 @@ export async function getServerSideProps() {
     },
   }
 }
-
-// <Layout title="Home">
-//   <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4">
-//     {products
-//       .filter((product) => product.countInStock > 0)
-//       .map((product) => (
-//         <ProductItem
-//           addToCartHandler={addToCartHandler}
-//           product={product}
-//           key={product.slug}
-//         ></ProductItem>
-//       ))}
-//   </div>
-// </Layout>
