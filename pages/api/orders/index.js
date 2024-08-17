@@ -1,7 +1,7 @@
-import Order from '@/models/Order'
-import db from '@/utils/db'
-import { getToken } from 'next-auth/jwt'
-import Product from '@/models/Product'
+import Order from "@/models/Order";
+import db from "@/utils/db";
+import { getToken } from "next-auth/jwt";
+import Product from "@/models/Product";
 
 const generateEmailContent = (data) => {
   return `<h1>Nuevo Pedido de: ${data.shippingAddress.fullName}</h1>
@@ -19,7 +19,7 @@ const generateEmailContent = (data) => {
   <tr style="color:black">°pedido para OB°</tr>
   <tbody>
   ${data.orderItems
-    .filter((item) => item.group === 'ob')
+    .filter((item) => item.group === "ob")
     .map(
       (item) => `
     <tr>
@@ -34,12 +34,12 @@ const generateEmailContent = (data) => {
     </tr>
   `
     )
-    .join('\n')}
+    .join("\n")}
   </tbody>
   <tr style="color:black">°pedido para EOB°</tr>
   <tbody>
   ${data.orderItems
-    .filter((item) => item.group === 'eob')
+    .filter((item) => item.group === "eob")
     .map(
       (item) => `
     <tr>
@@ -52,7 +52,7 @@ const generateEmailContent = (data) => {
     </tr>
   `
     )
-    .join('\n')}
+    .join("\n")}
   </tbody>
   <tfoot>
   <tr>
@@ -89,97 +89,97 @@ const generateEmailContent = (data) => {
   ${data.shippingAddress.city},<br/>
   </p>
   <hr/>
-  `
-}
+  `;
+};
 
 //////////////////////////////////////////////////////////////////////////////////
 // Function to update the stock count for multiple cart items
 const updateCountInStockForCartItems = async (cartItems) => {
   try {
-    const updatedCartItems = []
+    const updatedCartItems = [];
 
     // Iterate through each cart item
     for (const cartItem of cartItems) {
-      const { _id, quantity } = cartItem
+      const { _id, quantity } = cartItem;
 
       // Retrieve the product from the database
-      const product = await Product.findOne({ _id })
+      const product = await Product.findOne({ _id });
 
       // Check if the product exists
       if (!product) {
-        throw new Error(`Product with ID ${_id} not found`)
+        throw new Error(`Product with ID ${_id} not found`);
       }
       // Check if there is sufficient stock
       if (product.countInStock < quantity) {
-        throw new Error(`Insufficient stock for product with ID ${_id}`)
+        throw new Error(`Insufficient stock for product with ID ${_id}`);
       }
 
       // Update the stock count
-      const updatedCountInStock = product.countInStock - quantity
+      const updatedCountInStock = product.countInStock - quantity;
 
       // Update the product with the new stock count
       await Product.updateOne(
         { _id },
         { $set: { countInStock: updatedCountInStock } }
-      )
+      );
 
       // Add the updated cart item to the array
-      updatedCartItems.push({ _id, quantity, updatedCountInStock })
+      updatedCartItems.push({ _id, quantity, updatedCountInStock });
     }
     // Return the updated cart items
-    console.log(updatedCartItems)
-    return updatedCartItems
+    console.log(updatedCartItems);
+    return updatedCartItems;
   } catch (error) {
-    throw new Error('Failed to update stock count: ' + error.message)
+    throw new Error("Failed to update stock count: " + error.message);
   }
-}
+};
 /////////////////////////////////////////////////////////////////////////////////////
-import nodemailer from 'nodemailer'
+import nodemailer from "nodemailer";
 
-const email = process.env.EMAIL
-const pass = process.env.EMAIL_PASS
+const email = process.env.EMAIL;
+const pass = process.env.EMAIL_PASS;
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
     user: email,
     pass,
   },
-})
+});
 
 function emailDestination(seller) {
-  if (seller === 'Carlos Robledo') {
-    return 'ochoabawab@gmail.com, comercialcob@gmail.com, importacioneseob@gmail.com, carlor918@gmail.com'
+  if (seller === "Carlos Robledo") {
+    return "ochoabawab@gmail.com, comercialcob@gmail.com, heiderpalomino26@gmail.com, importacioneseob@gmail.com, carlor918@gmail.com";
   } else {
-    return 'ochoabawab@gmail.com, comercialcob@gmail.com, importacioneseob@gmail.com'
+    return "ochoabawab@gmail.com, comercialcob@gmail.com, heiderpalomino26@gmail.com, importacioneseob@gmail.com";
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
 
 const handler = async (req, res) => {
-  const user = await getToken({ req })
+  const user = await getToken({ req });
   if (!user) {
-    return res.status(401).send('Se requiere iniciar sesión')
+    return res.status(401).send("Se requiere iniciar sesión");
   }
-  await db.connect()
+  await db.connect();
   const newOrder = new Order({
     ...req.body,
     user: user._id,
-  })
+  });
   await transporter.sendMail({
     from: email,
     to: emailDestination(req.body.seller),
     html: generateEmailContent(req.body),
     subject: req.body.shippingAddress.fullName,
-  })
+  });
 
   const updatedCartItems = await updateCountInStockForCartItems(
     req.body.orderItems
-  )
-  console.log('Stock count updated for cart items:', updatedCartItems)
+  );
+  console.log("Stock count updated for cart items:", updatedCartItems);
 
-  const order = await newOrder.save()
-  res.status(201).send(order)
-}
-export default handler
+  const order = await newOrder.save();
+  res.status(201).send(order);
+};
+export default handler;
