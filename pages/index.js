@@ -1,57 +1,57 @@
-import Layout from '@/components/Layout'
-import ProductItem from '@/components/ProductItem'
-import Product from '@/models/Product'
-import { Store } from '@/utils/Store'
-import db from '@/utils/db'
-import axios from 'axios'
-import Image from 'next/image'
-import { useContext, useState } from 'react'
-import { toast } from 'react-toastify'
-import Tilt from 'react-parallax-tilt'
-import { motion } from 'framer-motion'
-import { fadeIn } from '@/utils/motion'
-import SearchBar from '@/components/SearchBar'
+import Layout from "@/components/Layout";
+import ProductItem from "@/components/ProductItem";
+import Product from "@/models/Product";
+import { Store } from "@/utils/Store";
+import db from "@/utils/db";
+import axios from "axios";
+import Image from "next/image";
+import { useContext } from "react";
+import { toast } from "react-toastify";
+import Tilt from "react-parallax-tilt";
+import { motion } from "framer-motion";
+import { fadeIn } from "@/utils/motion";
+import SearchBar from "@/components/SearchBar";
 
 const productsDetails = [
   {
-    title: 'Alternador',
-    icon: '/images/AL-076.png',
+    title: "Alternador",
+    icon: "/images/AL-076.png",
   },
   {
-    title: 'Arranque',
-    icon: '/images/AR-027.png',
+    title: "Arranque",
+    icon: "/images/AR-027.png",
   },
   {
-    title: 'Piezas Alternador',
-    icon: '/images/RA-051.png',
+    title: "Piezas Alternador",
+    icon: "/images/RA-051.png",
   },
   {
-    title: 'Piezas Arranque',
-    icon: '/images/ZM-893.png',
+    title: "Piezas Arranque",
+    icon: "/images/ZM-893.png",
   },
   {
-    title: 'Motoventilador',
-    icon: '/images/12-12V.png',
+    title: "Motoventilador",
+    icon: "/images/12-12V.png",
   },
   {
-    title: 'Distribuidor',
-    icon: '/images/AP-005.png',
+    title: "Distribuidor",
+    icon: "/images/AP-005.png",
   },
   {
-    title: 'Refrigeracion',
-    icon: '/images/2011945.png',
+    title: "Refrigeracion",
+    icon: "/images/2011945.png",
   },
   {
-    title: 'Pera',
-    icon: '/images/YZ-022.png',
+    title: "Pera",
+    icon: "/images/YZ-022.png",
   },
-]
+];
 
 const ServiceCard = ({ index, title, icon }) => {
   return (
     <Tilt className="xs:w-[250px] w-full">
       <motion.div
-        variants={fadeIn('right', 'spring', 0.5 * index, 0.75)}
+        variants={fadeIn("right", "spring", 0.5 * index, 0.75)}
         className="w-full green-pink-gradient p-[1px] rounded-[20px] shadow-card cursor-pointer"
       >
         <div
@@ -76,38 +76,36 @@ const ServiceCard = ({ index, title, icon }) => {
         </div>
       </motion.div>
     </Tilt>
-  )
-}
+  );
+};
 
 export default function Home({ products }) {
-  const [selectedCategory, setSelectedCategory] = useState(null)
-  const [modal, setModal] = useState(true)
+  const { state, dispatch } = useContext(Store);
+  const { cart, selectedCategory, modal } = state;
 
   const categoryHandler = (categoryId) => {
-    setSelectedCategory(categoryId)
-    setModal(!modal)
+    dispatch({ type: "SET_SELECTED_CATEGORY", payload: categoryId });
+    dispatch({ type: "TOGGLE_MODAL" });
     window.scrollTo({
       top: 0,
-      behavior: 'auto',
-    })
-  }
-  const { state, dispatch } = useContext(Store)
-  const { cart } = state
+      behavior: "smooth",
+    });
+  };
   const handleReturn = () => {
-    setModal(true)
-  }
+    dispatch({ type: "TOGGLE_MODAL" });
+  };
 
   const addToCartHandler = async (product) => {
-    const existItem = cart.cartItems.find((x) => x.slug === product.slug)
-    const quantity = existItem ? existItem.quantity + 1 : 1
-    const { data } = await axios.get(`/api/products/${product._id}`)
+    const existItem = cart.cartItems.find((x) => x.slug === product.slug);
+    const quantity = existItem ? existItem.quantity + 1 : 1;
+    const { data } = await axios.get(`/api/products/${product._id}`);
 
     if (data.countInStock < quantity) {
-      return toast.error('Lo sentimos. El producto está agotado')
+      return toast.error("Lo sentimos. El producto está agotado");
     }
-    dispatch({ type: 'CART_ADD_ITEM', payload: { ...product, quantity } })
-    toast.success('Producto agregado al carrito')
-  }
+    dispatch({ type: "CART_ADD_ITEM", payload: { ...product, quantity } });
+    toast.success("Producto agregado al carrito");
+  };
 
   return (
     <Layout title="Home">
@@ -151,15 +149,15 @@ export default function Home({ products }) {
         </div>
       )}
     </Layout>
-  )
+  );
 }
 
 export async function getServerSideProps() {
-  await db.connect()
-  const products = await Product.find().sort({ slug: 1 }).lean()
+  await db.connect();
+  const products = await Product.find().sort({ slug: 1 }).lean();
   return {
     props: {
       products: products.map(db.convertDocToObj),
     },
-  }
+  };
 }
