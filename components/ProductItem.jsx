@@ -2,13 +2,15 @@
 import Link from "next/link";
 import React from "react";
 import NoImage from "../public/images/no-image.png";
+import ImageWithFallback from "./ImageWithFallback";
 
 export default function ProductItem({ product, addToCartHandler }) {
   return (
     <div className="product-card">
       <Link href={`/product/${product.slug}`}>
-        <img
-          src={product.image || NoImage}
+        <ImageWithFallback
+          src={product.image}
+          fallbackSrc={NoImage}
           alt={product.name}
           className="max-w-sm max-h-40 md:max-w-xs md:max-h-32"
         />
