@@ -1,13 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
-import Link from 'next/link'
-import React from 'react'
+import Link from "next/link";
+import React from "react";
+import NoImage from "/images/no-image.png";
 
 export default function ProductItem({ product, addToCartHandler }) {
   return (
     <div className="product-card">
       <Link href={`/product/${product.slug}`}>
         <img
-          src={product.image}
+          src={product.image || NoImage}
           alt={product.name}
           className="max-w-sm max-h-40 md:max-w-xs md:max-h-32"
         />
@@ -36,5 +37,5 @@ export default function ProductItem({ product, addToCartHandler }) {
         )}
       </div>
     </div>
-  )
+  );
 }
