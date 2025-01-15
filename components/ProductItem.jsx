@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import React from "react";
-import NoImage from "/images/no-image.png";
+import NoImage from "../public/images/no-image.png";
 
 export default function ProductItem({ product, addToCartHandler }) {
   return (
