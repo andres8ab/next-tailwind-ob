@@ -4,6 +4,10 @@ import { getToken } from "next-auth/jwt";
 import Product from "@/models/Product";
 
 const generateEmailContent = (data) => {
+  // Check if there are items in each group
+  const hasOBItems = data.orderItems.some((item) => item.group === "ob");
+  const hasEOBItems = data.orderItems.some((item) => item.group === "eob");
+
   return `<h1>Nuevo Pedido de: ${data.shippingAddress.fullName}</h1>
   <h2>Nit: ${data.shippingAddress.nit}</h2>
   <p>
@@ -16,7 +20,7 @@ const generateEmailContent = (data) => {
   <td style="padding:1rem;text-transform:uppercase;"><strong>Cantidad</strong></td>
   <td style="padding:1rem;text-transform:uppercase;" align="right"><strong>Precio</strong></td>
   </thead>
-  <tr style="color:black">°pedido para OB°</tr>
+  ${hasOBItems ? `<tr style="color:black">°pedido para OB°</tr>` : ""}
   <tbody>
   ${data.orderItems
     .filter((item) => item.group === "ob")
@@ -36,7 +40,7 @@ const generateEmailContent = (data) => {
     )
     .join("\n")}
   </tbody>
-  <tr style="color:black">°pedido para EOB°</tr>
+  ${hasEOBItems ? `<tr style="color:black">°pedido para EOB°</tr>` : ""}
   <tbody>
   ${data.orderItems
     .filter((item) => item.group === "eob")
@@ -48,7 +52,9 @@ const generateEmailContent = (data) => {
     <td style="border-bottom:1px solid;
   padding:1rem;" align="center">${item.quantity}</td>
     <td style="border-bottom:1px solid;
-  padding:1rem;" align="right"> $${item.price.toLocaleString()}</td>
+  padding:1rem;" align="right"> $${(
+    item.price * item.quantity
+  ).toLocaleString()}</td>
     </tr>
   `
     )
