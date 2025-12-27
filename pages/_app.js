@@ -3,10 +3,7 @@ import { SessionProvider, useSession } from "next-auth/react";
 import { StoreProvider } from "@/utils/Store";
 import { useRouter } from "next/router";
 import { ThemeProvider } from "next-themes";
-import { Poppins } from "next/font/google";
 import { useScrollRestoration } from "next-restore-scroll-position";
-
-const poppins = Poppins({ subsets: ["latin"], weight: ["400", "700"] });
 
 export default function App({
   Component,
@@ -17,7 +14,7 @@ export default function App({
   return (
     <SessionProvider session={session}>
       <StoreProvider>
-        <main className={poppins.className}>
+        <main>
           <ThemeProvider
             enableSystem={false}
             attribute="class"
