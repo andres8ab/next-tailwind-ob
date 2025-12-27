@@ -36,9 +36,9 @@ export default function ProductScreen(props) {
         <button
           type="button"
           onClick={() => router.back()}
-          className="btn btn-outline btn-primary btn-xs sm:btn-sm md:btn-md lg:btn-lg"
+          className="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2 px-4 transition-all duration-200 shadow-sm hover:shadow-md"
         >
-          regresar
+          ‹ Regresar
         </button>
       </div>
       <div className="grid lg:grid-cols-4 md:grid-cols-2 md:gap-3">
@@ -51,31 +51,43 @@ export default function ProductScreen(props) {
             priority
           ></Image>
         </div>
-        <div>
-          <ul>
-            <li>
-              <h1 className="text.lg">{product.name}</h1>
+        <div className="space-y-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">{product.name}</h1>
+          </div>
+          <ul className="space-y-2 text-gray-700 dark:text-gray-300">
+            <li className="flex items-center gap-2">
+              <span className="font-semibold text-gray-900 dark:text-gray-100">Categoria:</span>
+              <span>{product.category}</span>
             </li>
-            <li>Categoria: {product.category}</li>
-            <li>Marca: {product.brand}</li>
-            <li>Decripcion: {product.description}</li>
+            <li className="flex items-center gap-2">
+              <span className="font-semibold text-gray-900 dark:text-gray-100">Marca:</span>
+              <span>{product.brand}</span>
+            </li>
+            <li className="flex flex-col gap-2">
+              <span className="font-semibold text-gray-900 dark:text-gray-100">Descripción:</span>
+              <span className="text-gray-600 dark:text-gray-400">{product.description}</span>
+            </li>
           </ul>
         </div>
         <div>
-          <div className="card p-5">
-            <div className="mb-2 flex justify-between">
-              <div>Precio</div>
-              <div>${product.price}</div>
+          <div className="card p-6">
+            <div className="mb-4 flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="font-semibold text-gray-700 dark:text-gray-300">Precio</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-500">${product.price.toLocaleString()}</div>
             </div>
-            <div className="mb-2 flex justify-between">
-              <div>Status</div>
-              <div>{product.countInStock > 0 ? 'Disponible' : 'Agotado'}</div>
+            <div className="mb-4 flex justify-between items-center">
+              <div className="font-semibold text-gray-700 dark:text-gray-300">Status</div>
+              <div className={`font-medium ${product.countInStock > 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
+                {product.countInStock > 0 ? 'Disponible' : 'Agotado'}
+              </div>
             </div>
             <button
               className="primary-button w-full"
               onClick={addToCartHandler}
+              disabled={product.countInStock === 0}
             >
-              Agrega al Carrito
+              Agregar al Carrito
             </button>
           </div>
         </div>

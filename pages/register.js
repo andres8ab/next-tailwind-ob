@@ -1,12 +1,12 @@
-import Link from 'next/link';
-import React, { useEffect } from 'react';
-import { signIn, useSession } from 'next-auth/react';
-import { useForm } from 'react-hook-form';
-import Layout from '@/components/Layout';
-import { getError } from '@/utils/error';
-import { toast } from 'react-toastify';
-import { useRouter } from 'next/router';
-import axios from 'axios';
+import Link from "next/link";
+import React, { useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useForm } from "react-hook-form";
+import Layout from "@/components/Layout";
+import { getError } from "@/utils/error";
+import { toast } from "react-toastify";
+import { useRouter } from "next/router";
+import axios from "axios";
 
 export default function LoginScreen() {
   const { data: session } = useSession();
@@ -16,7 +16,7 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (session?.user) {
-      router.push(redirect || '/');
+      router.push(redirect || "/");
     }
   }, [redirect, router, session?.user]);
 
@@ -29,13 +29,13 @@ export default function LoginScreen() {
 
   const submitHandler = async ({ name, username, password }) => {
     try {
-      await axios.post('/api/auth/signup', {
+      await axios.post("/api/auth/signup", {
         name,
         username,
         password,
       });
 
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         redirect: false,
         username,
         password,
@@ -61,8 +61,8 @@ export default function LoginScreen() {
             className="w-full"
             id="name"
             autoFocus
-            {...register('name', {
-              required: 'Ingrese nombre',
+            {...register("name", {
+              required: "Ingrese nombre",
             })}
           />
           {errors.name && (
@@ -73,11 +73,11 @@ export default function LoginScreen() {
           <label htmlFor="username">Email</label>
           <input
             type="text"
-            {...register('username', {
-              required: 'Ingrese email',
+            {...register("username", {
+              required: "Ingrese email",
               pattern: {
                 value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$/i,
-                message: 'Ingrese un email válido',
+                message: "Ingrese un email válido",
               },
             })}
             className="w-full"
@@ -91,11 +91,11 @@ export default function LoginScreen() {
           <label htmlFor="password">Contraseña</label>
           <input
             type="password"
-            {...register('password', {
-              required: 'Ingrese una contraseña',
+            {...register("password", {
+              required: "Ingrese una contraseña",
               minLength: {
                 value: 6,
-                message: 'La contraseña debe tener al menos 6 caracteres',
+                message: "La contraseña debe tener al menos 6 caracteres",
               },
             })}
             className="w-full"
@@ -112,12 +112,12 @@ export default function LoginScreen() {
             className="w-full"
             type="password"
             id="confirmPassword"
-            {...register('confirmPassword', {
-              required: 'Confirme la contraseña',
-              validate: (value) => value === getValues('password'),
+            {...register("confirmPassword", {
+              required: "Confirme la contraseña",
+              validate: (value) => value === getValues("password"),
               minLength: {
                 value: 6,
-                message: 'La confirmación debe tener al menos 6 caracteres',
+                message: "La confirmación debe tener al menos 6 caracteres",
               },
             })}
           />
@@ -125,16 +125,18 @@ export default function LoginScreen() {
             <div className="text-red-500">{errors.confirmPassword.message}</div>
           )}
           {errors.confirmPassword &&
-            errors.confirmPassword.type === 'validate' && (
+            errors.confirmPassword.type === "validate" && (
               <div className="text-red-500">La contraseña no coincide</div>
             )}
         </div>
         <div className="mb-4">
-          <button className="primary-button">Crear Cuenta</button>
+          <button className="primary-button" disabled>
+            Crear Cuenta
+          </button>
         </div>
         <div className="mb-4">
           No tienes una cuenta? &nbsp;
-          <Link href={`/register?redirect=${redirect || '/'}`}>
+          <Link href={`/register?redirect=${redirect || "/"}`}>
             Crear Cuenta
           </Link>
         </div>

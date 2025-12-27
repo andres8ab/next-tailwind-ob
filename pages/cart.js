@@ -42,32 +42,31 @@ function CartScreen() {
       ) : (
         <div className="text-sm grid md:grid-cols-4 md:gap-5">
           <div className="overflow-x-auto md:col-span-3">
-            <table className="min-w-full">
-              <thead className="border-b">
+            <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md">
+              <thead className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  <th className="px-5 text-left">Item</th>
-                  <th className="px-5 text-right">Cantidad</th>
-                  <th className="px-5 text-right">Precio</th>
-                  <th className="px-5">Accion</th>
+                  <th className="px-5 py-3 text-left font-semibold text-gray-900 dark:text-gray-100">Item</th>
+                  <th className="px-5 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">Cantidad</th>
+                  <th className="px-5 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">Precio</th>
+                  <th className="px-5 py-3 font-semibold text-gray-900 dark:text-gray-100">Accion</th>
                 </tr>
               </thead>
               <tbody>
                 {cartItems.map((item) => (
-                  <tr key={item.slug} className="border-b">
-                    <td>
+                  <tr key={item.slug} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="p-5">
                       <Link
                         href={`/product/${item.slug}`}
-                        className="flex items-center"
+                        className="flex items-center gap-3 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       >
                         <Image
-                          className="w-auto h-auto"
+                          className="w-auto h-auto rounded"
                           src={item.image}
                           alt={item.name}
                           width={50}
                           height={50}
                         ></Image>
-                        &nbsp;
-                        {item.name}
+                        <span className="text-gray-900 dark:text-gray-100">{item.name}</span>
                       </Link>
                     </td>
                     <td className="p-5 text-right">
@@ -76,6 +75,7 @@ function CartScreen() {
                         onChange={(e) =>
                           updateCartHandler(item, e.target.value)
                         }
+                        className="rounded-lg border border-gray-300 dark:border-gray-600 p-1.5 outline-none ring-red-300 dark:ring-red-700 focus:ring-2 focus:border-red-500 dark:focus:border-red-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       >
                         {[...Array(item.countInStock).keys()].map((x) => (
                           <option key={x + 1} value={x + 1}>
@@ -84,11 +84,13 @@ function CartScreen() {
                         ))}
                       </select>
                     </td>
-                    <td className="p-5 text-right">${item.price}</td>
+                    <td className="p-5 text-right text-gray-900 dark:text-gray-100 font-medium">${item.price}</td>
                     <td className="p-5 text-center">
-                      <button>
+                      <button
+                        onClick={() => removeItemHandler(item)}
+                        className="hover:text-red-600 dark:hover:text-red-400 transition-colors p-1 rounded"
+                      >
                         <XCricleIcon
-                          onClick={() => removeItemHandler(item)}
                           className="h-5 w-5"
                         ></XCricleIcon>
                       </button>

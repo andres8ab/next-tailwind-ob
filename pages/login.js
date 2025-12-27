@@ -1,11 +1,11 @@
-import Link from 'next/link';
-import React, { useEffect } from 'react';
-import { signIn, useSession } from 'next-auth/react';
-import { useForm } from 'react-hook-form';
-import Layout from '@/components/Layout';
-import { getError } from '@/utils/error';
-import { toast } from 'react-toastify';
-import { useRouter } from 'next/router';
+// import Link from "next/link";
+import React, { useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useForm } from "react-hook-form";
+import Layout from "@/components/Layout";
+import { getError } from "@/utils/error";
+import { toast } from "react-toastify";
+import { useRouter } from "next/router";
 
 export default function LoginScreen() {
   const { data: session } = useSession();
@@ -15,7 +15,7 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (session?.user) {
-      router.push(redirect || '/');
+      router.push(redirect || "/");
     }
   }, [redirect, router, session?.user]);
 
@@ -26,7 +26,7 @@ export default function LoginScreen() {
   } = useForm();
   const submitHandler = async ({ username, password }) => {
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         redirect: false,
         username,
         password,
@@ -49,11 +49,11 @@ export default function LoginScreen() {
           <label htmlFor="username">Email o Usuario</label>
           <input
             type="text"
-            {...register('username', {
-              required: 'Porfavor ingrese email',
+            {...register("username", {
+              required: "Porfavor ingrese email",
               minLength: {
                 value: 6,
-                message: 'usuario mayor a 5 caracteres',
+                message: "usuario mayor a 5 caracteres",
               },
             })}
             className="w-full"
@@ -68,11 +68,11 @@ export default function LoginScreen() {
           <label htmlFor="password">Contraseña</label>
           <input
             type="password"
-            {...register('password', {
-              required: 'Ingrese contraseña',
+            {...register("password", {
+              required: "Ingrese contraseña",
               minLength: {
                 value: 6,
-                message: 'contraseña mayor a 5 caracteres',
+                message: "contraseña mayor a 5 caracteres",
               },
             })}
             className="w-full"
@@ -86,12 +86,12 @@ export default function LoginScreen() {
         <div className="mb-4">
           <button className="primary-button">Iniciar Sesión</button>
         </div>
-        <div className="mb-4">
+        {/* <div className="mb-4">
           No tienes cuenta? &nbsp;
           <Link href={`/register?redirect=${redirect || '/'}`}>
             Crear Cuenta
           </Link>
-        </div>
+        </div> */}
       </form>
     </Layout>
   );

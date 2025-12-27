@@ -135,12 +135,21 @@ const generateEmailContent = (data) => {
           </tfoot>
         </table>
         
-        <div style="margin-top: 30px;">
-          <h2 style="color: #ac18c8; font-size: 20px; margin-bottom: 10px; border-bottom: 2px solid #ac18c8; padding-bottom: 5px;">💬 Comentarios</h2>
-          <p style="color: #374151; line-height: 1.6; padding: 15px; background-color: #f9fafb; border-radius: 8px; border-left: 4px solid #ac18c8;">
-            ${data.comment || "Sin comentarios"}
+       ${
+         data.comment
+           ? `
+        <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 10px; border: 3px solid #f59e0b; box-shadow: 0 4px 6px rgba(245, 158, 11, 0.2);">
+          <h2 style="color: #dc2626; font-size: 22px; margin-bottom: 15px; display: flex; align-items: center; font-weight: 700;">
+            <span style="font-size: 28px; margin-right: 10px;">⚠️</span>
+            COMENTARIOS IMPORTANTES
+          </h2>
+          <p style="color: #1f2937; line-height: 1.8; padding: 15px; background-color: white; border-radius: 8px; border-left: 6px solid #dc2626; font-size: 15px; font-weight: 500;">
+            ${data.comment}
           </p>
         </div>
+        `
+           : ""
+       }
         
         <div style="margin-top: 25px;">
           <h2 style="color: #ac18c8; font-size: 20px; margin-bottom: 10px; border-bottom: 2px solid #ac18c8; padding-bottom: 5px;">📍 Dirección de Envío</h2>

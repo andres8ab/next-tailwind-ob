@@ -1,106 +1,108 @@
-import { useRouter } from 'next/router'
-const { default: axios } = require('axios')
-const { default: Link } = require('next/link')
-const { useReducer, useEffect } = require('react')
-const { toast } = require('react-toastify')
-const { default: Layout } = require('@/components/Layout')
-const { getError } = require('@/utils/error')
+import { useRouter } from "next/router";
+const { default: axios } = require("axios");
+const { default: Link } = require("next/link");
+const { useReducer, useEffect, useState } = require("react");
+const { toast } = require("react-toastify");
+const { default: Layout } = require("@/components/Layout");
+const { getError } = require("@/utils/error");
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'FETCH_REQUEST':
-      return { ...state, loading: true, error: '' }
-    case 'FETCH_SUCCESS':
-      return { ...state, loading: false, users: action.payload, error: '' }
-    case 'FETCH_FAIL':
-      return { ...state, loading: false, error: action.payload }
-    case 'CREATE_REQUEST':
-      return { ...state, loadingCreate: true }
-    case 'CREATE_SUCCESS':
-      return { ...state, loadingCreate: false }
-    case 'CREATE_FAIL':
-      return { ...state, loadingCreate: false }
-    case 'DELETE_REQUEST':
-      return { ...state, loadingDelete: true }
-    case 'DELETE_SUCCESS':
-      return { ...state, loadingDelete: false, successDelete: true }
-    case 'DELETE_FAIL':
-      return { ...state, loadingDelete: false }
-    case 'DELETE_RESET':
-      return { ...state, loadingDelete: false, successDelete: false }
+    case "FETCH_REQUEST":
+      return { ...state, loading: true, error: "" };
+    case "FETCH_SUCCESS":
+      return { ...state, loading: false, users: action.payload, error: "" };
+    case "FETCH_FAIL":
+      return { ...state, loading: false, error: action.payload };
+    case "CREATE_REQUEST":
+      return { ...state, loadingCreate: true };
+    case "CREATE_SUCCESS":
+      return { ...state, loadingCreate: false };
+    case "CREATE_FAIL":
+      return { ...state, loadingCreate: false };
+    case "DELETE_REQUEST":
+      return { ...state, loadingDelete: true };
+    case "DELETE_SUCCESS":
+      return { ...state, loadingDelete: false, successDelete: true };
+    case "DELETE_FAIL":
+      return { ...state, loadingDelete: false };
+    case "DELETE_RESET":
+      return { ...state, loadingDelete: false, successDelete: false };
     default:
-      return state
+      return state;
   }
 }
 
 function AdminUsersScreen() {
-  const router = useRouter()
+  const router = useRouter();
+  const [sortOrder, setSortOrder] = useState("asc"); // 'asc' or 'desc'
   const [
     { loading, error, users, successDelete, loadingCreate, loadingDelete },
     dispatch,
   ] = useReducer(reducer, {
     loading: true,
     users: [],
-    error: '',
-  })
+    error: "",
+  });
 
-  const sortedUsers = users.sort(function (a, b) {
-    if (a.name < b.name) {
-      return -1
-    }
-    if (a.name > b.name) {
-      return 1
-    }
-    return 0
-  })
+  const sortedUsers = [...users].sort(function (a, b) {
+    const comparison = a.name.localeCompare(b.name, undefined, {
+      sensitivity: "base",
+    });
+    return sortOrder === "asc" ? comparison : -comparison;
+  });
+
+  const toggleSortOrder = () => {
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+  };
 
   const createHandler = async () => {
-    if (!window.confirm('Estas seguro?')) {
-      return
+    if (!window.confirm("Estas seguro?")) {
+      return;
     }
     try {
-      dispatch({ type: 'CREATE_REQUEST' })
-      const { data } = await axios.post(`/api/admin/users`)
-      dispatch({ type: 'CREATE_SUCCESS' })
-      toast.success('Usuario creado correctamente')
-      router.push(`/admin/user/${data.user._id}`)
+      dispatch({ type: "CREATE_REQUEST" });
+      const { data } = await axios.post(`/api/admin/users`);
+      dispatch({ type: "CREATE_SUCCESS" });
+      toast.success("Usuario creado correctamente");
+      router.push(`/admin/user/${data.user._id}`);
     } catch (err) {
-      dispatch({ type: 'CREATE_FAIL' })
-      toast.error(getError(err))
+      dispatch({ type: "CREATE_FAIL" });
+      toast.error(getError(err));
     }
-  }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        dispatch({ type: 'FETCH_REQUEST' })
-        const { data } = await axios.get(`/api/admin/users`)
-        dispatch({ type: 'FETCH_SUCCESS', payload: data })
+        dispatch({ type: "FETCH_REQUEST" });
+        const { data } = await axios.get(`/api/admin/users`);
+        dispatch({ type: "FETCH_SUCCESS", payload: data });
       } catch (err) {
-        dispatch({ type: 'FETCH_FAIL', payload: getError(err) })
+        dispatch({ type: "FETCH_FAIL", payload: getError(err) });
       }
-    }
+    };
     if (successDelete) {
-      dispatch({ type: 'DELETE_RESET' })
+      dispatch({ type: "DELETE_RESET" });
     } else {
-      fetchData()
+      fetchData();
     }
-  }, [successDelete])
+  }, [successDelete]);
 
   const deleteHandler = async (userId) => {
-    if (!window.confirm('Esta seguro de eliminar?')) {
-      return
+    if (!window.confirm("Esta seguro de eliminar?")) {
+      return;
     }
     try {
-      dispatch({ type: 'DELETE_REQUEST' })
-      await axios.delete(`/api/admin/users/${userId}`)
-      dispatch({ type: 'DELETE_SUCCESS' })
-      toast.success('Usuario eliminado correctamente')
+      dispatch({ type: "DELETE_REQUEST" });
+      await axios.delete(`/api/admin/users/${userId}`);
+      dispatch({ type: "DELETE_SUCCESS" });
+      toast.success("Usuario eliminado correctamente");
     } catch (err) {
-      dispatch({ type: 'DELETE_FAIL' })
-      toast.error(getError(err))
+      dispatch({ type: "DELETE_FAIL" });
+      toast.error(getError(err));
     }
-  }
+  };
 
   return (
     <Layout title="Usuarios">
@@ -131,7 +133,7 @@ function AdminUsersScreen() {
             onClick={createHandler}
             className="primary-button"
           >
-            {loadingCreate ? 'Cargando' : 'Crear'}
+            {loadingCreate ? "Cargando" : "Crear"}
           </button>
           {loading ? (
             <div>Cargando...</div>
@@ -139,11 +141,50 @@ function AdminUsersScreen() {
             <div className="alert-error">{error}</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className="border-b">
+              <table className="table table-zebra w-full">
+                <thead>
                   <tr>
                     <th className="px-5 text-left">ID</th>
-                    <th className="p-5 text-left">NOMBRE</th>
+                    <th className="p-5 text-left">
+                      <button
+                        onClick={toggleSortOrder}
+                        className="flex items-center gap-2 hover:text-primary transition-colors"
+                        type="button"
+                      >
+                        NOMBRE
+                        {sortOrder === "asc" ? (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 15l7-7 7 7"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    </th>
                     <th className="p-5 text-left">USUARIO</th>
                     <th className="p-5 text-left">ADMIN</th>
                     <th className="p-5 text-left">VENDEDOR</th>
@@ -154,14 +195,14 @@ function AdminUsersScreen() {
                 </thead>
                 <tbody>
                   {sortedUsers.map((user) => (
-                    <tr key={user._id} className="border-b">
+                    <tr key={user._id}>
                       <td className="p-5">{user._id.substring(20, 24)}</td>
                       <td className="p-5">{user.name}</td>
                       <td className="p-5">{user.username}</td>
-                      <td className="p-5">{user.isAdmin ? 'SI' : 'NO'}</td>
+                      <td className="p-5">{user.isAdmin ? "SI" : "NO"}</td>
                       <td className="p-5">{user.seller}</td>
                       <td className="p-5">{user.clientDiscount}</td>
-                      <td className="p-5">{user.isClient ? 'SI' : 'NO'}</td>
+                      <td className="p-5">{user.isClient ? "SI" : "NO"}</td>
                       <td className="p-5">
                         <Link
                           href={`/admin/user/${user._id}`}
@@ -188,8 +229,8 @@ function AdminUsersScreen() {
         </div>
       </div>
     </Layout>
-  )
+  );
 }
 
-AdminUsersScreen.auth = { adminOnly: true }
-export default AdminUsersScreen
+AdminUsersScreen.auth = { adminOnly: true };
+export default AdminUsersScreen;
