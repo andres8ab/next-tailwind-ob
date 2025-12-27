@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { useState, useEffect } from "react";
 
 const ImageWithFallback = ({ src, fallbackSrc, alt, className }) => {
@@ -16,7 +17,14 @@ const ImageWithFallback = ({ src, fallbackSrc, alt, className }) => {
   };
 
   return (
-    <img src={imgSrc} alt={alt} className={className} onError={handleError} />
+    <Image
+      src={imgSrc}
+      alt={alt}
+      className={className}
+      onError={handleError}
+      width={280}
+      height={120}
+    />
   );
 };
 

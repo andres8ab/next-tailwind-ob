@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import React from "react";
 import NoImage from "../public/images/no-image.png";
@@ -12,7 +11,7 @@ export default function ProductItem({ product, addToCartHandler }) {
           src={product.image}
           fallbackSrc={NoImage}
           alt={product.name}
-          className="max-w-sm max-h-40 md:max-w-[280px] md:max-h-32 justify-self-center"
+          className="max-w-sm max-h-40 md:max-w-[280px] md:max-h-32 justify-self-center object-contain"
         />
       </Link>
 
