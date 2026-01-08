@@ -1,11 +1,19 @@
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 import NoImage from "../public/images/no-image.png";
 import ImageWithFallback from "./ImageWithFallback";
 
 export default function ProductItem({ product, addToCartHandler }) {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
-    <div className="product-card">
+    <div
+      className={`product-card ${isHovered ? "scale-[1.02] shadow-2xl" : ""}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={() => setIsHovered(true)}
+      onTouchEnd={() => setIsHovered(false)}
+    >
       <Link href={`/product/${product.slug}`}>
         <ImageWithFallback
           src={product.image}
@@ -17,7 +25,11 @@ export default function ProductItem({ product, addToCartHandler }) {
 
       <div className="grid p-4 gap-3">
         <Link href={`/product/${product.slug}`}>
-          <h2 className="text-xl px-1 font-bold md:text-sm text-gray-900 dark:text-gray-100 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+          <h2
+            className={`text-xl px-1 font-bold md:text-sm text-gray-900 dark:text-gray-100 transition-colors ${
+              isHovered ? "text-red-600 dark:text-red-400" : ""
+            }`}
+          >
             {product.name}
           </h2>
         </Link>
