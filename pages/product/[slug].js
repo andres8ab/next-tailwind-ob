@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/router'
 import React, { useContext } from 'react'
 import { toast } from 'react-toastify'
+import { clearsStockFlag } from '@/utils/cartStock'
 
 export default function ProductScreen(props) {
   const { product } = props
@@ -26,7 +27,15 @@ export default function ProductScreen(props) {
     if (data.countInStock < quantity) {
       return toast.error('Lo sentimos. El producto está agotado')
     }
-    dispatch({ type: 'CART_ADD_ITEM', payload: { ...product, quantity } })
+    dispatch({
+      type: 'CART_ADD_ITEM',
+      payload: {
+        ...product,
+        ...data,
+        quantity,
+        clearsStock: clearsStockFlag(quantity, data.countInStock),
+      },
+    })
     toast.success('Producto agregado al carrito')
   }
 

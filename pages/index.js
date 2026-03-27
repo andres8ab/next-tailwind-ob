@@ -11,6 +11,7 @@ import Tilt from "react-parallax-tilt";
 import { motion } from "framer-motion";
 import { fadeIn } from "@/utils/motion";
 import SearchBar from "@/components/SearchBar";
+import { clearsStockFlag } from "@/utils/cartStock";
 
 const productsDetails = [
   {
@@ -103,7 +104,15 @@ export default function Home({ products }) {
     if (data.countInStock < quantity) {
       return toast.error("Lo sentimos. El producto está agotado");
     }
-    dispatch({ type: "CART_ADD_ITEM", payload: { ...product, quantity } });
+    dispatch({
+      type: "CART_ADD_ITEM",
+      payload: {
+        ...product,
+        ...data,
+        quantity,
+        clearsStock: clearsStockFlag(quantity, data.countInStock),
+      },
+    });
     toast.success("Producto agregado al carrito");
   };
 

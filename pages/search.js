@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useRouter } from "next/router";
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { toast } from "react-toastify";
 import Layout from "@/components/Layout";
 import { Store } from "@/utils/Store";
@@ -9,6 +9,7 @@ import ProductItem from "@/components/ProductItem";
 import Product from "@/models/Product";
 import db from "@/utils/db";
 import SearchBar from "@/components/SearchBar";
+import { clearsStockFlag } from "@/utils/cartStock";
 
 const PAGE_SIZE = 6;
 
@@ -83,6 +84,8 @@ export default function Search(props) {
   };
 
   const { state, dispatch } = useContext(Store);
+  const [addedModalOpen, setAddedModalOpen] = useState(false);
+
   const addToCartHandler = async (product) => {
     const existItem = state.cart.cartItems.find((x) => x._id === product._id);
     const quantity = existItem ? existItem.quantity + 1 : 1;
@@ -91,11 +94,62 @@ export default function Search(props) {
       toast.error("Lo sentimos. El producto está agotado");
       return;
     }
-    dispatch({ type: "CART_ADD_ITEM", payload: { ...product, quantity } });
-    router.push("/cart");
+    dispatch({
+      type: "CART_ADD_ITEM",
+      payload: {
+        ...product,
+        ...data,
+        quantity,
+        clearsStock: clearsStockFlag(quantity, data.countInStock),
+      },
+    });
+    setAddedModalOpen(true);
   };
   return (
     <Layout title="buscar">
+      {addedModalOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="added-to-cart-title"
+          onClick={() => setAddedModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2
+              id="added-to-cart-title"
+              className="text-lg font-semibold text-gray-900 dark:text-gray-100"
+            >
+              Producto agregado al carrito
+            </h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">
+              ¿Ir al carrito?
+            </p>
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                onClick={() => setAddedModalOpen(false)}
+              >
+                Seguir comprando
+              </button>
+              <button
+                type="button"
+                className="default-button px-4 py-2"
+                onClick={() => {
+                  setAddedModalOpen(false);
+                  router.push("/cart");
+                }}
+              >
+                Ir al carrito
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="flex md:hidden">
         <SearchBar />
       </div>

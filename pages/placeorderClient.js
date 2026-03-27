@@ -10,6 +10,7 @@ import Layout from "@/components/Layout";
 import { getError } from "@/utils/error";
 import { Store } from "@/utils/Store";
 import { useSession } from "next-auth/react";
+import { clearsStockFlag } from "@/utils/cartStock";
 
 function reducer(state, action) {
   switch (action.type) {
@@ -112,8 +113,19 @@ export default function PlaceorderClientScreen() {
   const placeOrderHandler = async () => {
     try {
       setSendLoading(true);
+      const orderItems = await Promise.all(
+        cartItems.map(async (item) => {
+          const { data: product } = await axios.get(`/api/products/${item._id}`);
+          return {
+            ...item,
+            ...product,
+            quantity: item.quantity,
+            clearsStock: clearsStockFlag(item.quantity, product.countInStock),
+          };
+        })
+      );
       const { data } = await axios.post("api/orders", {
-        orderItems: cartItems,
+        orderItems,
         shippingAddress,
         paymentMethod,
         itemsPrice,

@@ -5,6 +5,9 @@ import { Combobox } from "@headlessui/react";
 import SearchIcon from "@heroicons/react/24/outline/MagnifyingGlassIcon";
 import axios from "axios";
 
+/** Sentinel for Combobox.Option that navigates to full search results */
+const VER_RESULTADOS_OPTION = { __verResultados: true };
+
 export default function SearchBar() {
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState([]);
@@ -47,17 +50,21 @@ export default function SearchBar() {
     };
   }, [query]);
 
+  const handleSearch = () => {
+    if (query.trim()) {
+      router.push(`/search?query=${query}`);
+    }
+  };
+
   const handleSelect = (product) => {
+    if (product?.__verResultados) {
+      handleSearch();
+      return;
+    }
     if (product) {
       setQuery("");
       setProducts([]);
       router.push(`/product/${product.slug}`);
-    }
-  };
-
-  const handleSearch = () => {
-    if (query.trim()) {
-      router.push(`/search?query=${query}`);
     }
   };
 
@@ -98,34 +105,48 @@ export default function SearchBar() {
                 Buscando...
               </div>
             ) : filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
+              <>
+                {filteredProducts.map((product) => (
+                  <Combobox.Option
+                    key={product.id}
+                    value={product}
+                    className={({ active }) =>
+                      `relative cursor-default select-none py-2 pl-4 pr-4 transition-colors duration-150 ${
+                        active
+                          ? "bg-red-50 dark:bg-red-900/30 text-gray-900 dark:text-white"
+                          : "text-gray-900 dark:text-gray-100"
+                      }`
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      {product.image && (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-10 w-10 object-contain"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <span className="block font-medium line-clamp-2">
+                          {product.name}
+                        </span>
+                      </div>
+                    </div>
+                  </Combobox.Option>
+                ))}
                 <Combobox.Option
-                  key={product.id}
-                  value={product}
+                  value={VER_RESULTADOS_OPTION}
                   className={({ active }) =>
-                    `relative cursor-default select-none py-2 pl-4 pr-4 transition-colors duration-150 ${
+                    `relative cursor-default select-none border-t border-gray-200 dark:border-gray-600 py-2 pl-4 pr-4 text-sm font-medium transition-colors duration-150 ${
                       active
-                        ? "bg-red-50 dark:bg-red-900/30 text-gray-900 dark:text-white"
-                        : "text-gray-900 dark:text-gray-100"
+                        ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                        : "text-red-600 dark:text-red-400"
                     }`
                   }
                 >
-                  <div className="flex items-center gap-2">
-                    {product.image && (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="h-10 w-10 object-contain"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <span className="block font-medium line-clamp-2">
-                        {product.name}
-                      </span>
-                    </div>
-                  </div>
+                  Ver resultados
                 </Combobox.Option>
-              ))
+              </>
             ) : (
               <div className="relative cursor-default select-none px-4 py-2 text-gray-700 dark:text-gray-300">
                 No se encontraron productos

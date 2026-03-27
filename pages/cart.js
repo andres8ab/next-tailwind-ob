@@ -8,6 +8,7 @@ import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { clearsStockFlag } from '@/utils/cartStock'
 
 function CartScreen() {
   const router = useRouter()
@@ -24,7 +25,15 @@ function CartScreen() {
     if (data.countInStock < quantity) {
       return toast.error('Lo sentimos. El producto está agotado')
     }
-    dispatch({ type: 'CART_ADD_ITEM', payload: { ...item, quantity } })
+    dispatch({
+      type: 'CART_ADD_ITEM',
+      payload: {
+        ...item,
+        ...data,
+        quantity,
+        clearsStock: clearsStockFlag(quantity, data.countInStock),
+      },
+    })
     toast.success('Producto actualizado en el carrito')
   }
 

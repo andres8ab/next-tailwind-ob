@@ -10,6 +10,7 @@ const orderSchema = new mongoose.Schema(
         image: { type: String, required: true },
         price: { type: Number, required: true },
         slug: { type: String, required: true },
+        clearsStock: { type: Boolean },
       },
     ],
     shippingAddress: {

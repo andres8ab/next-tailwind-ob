@@ -7,6 +7,22 @@ const generateEmailContent = (data) => {
   // Check if there are items in each group
   const hasOBItems = data.orderItems.some((item) => item.group === "ob");
   const hasEOBItems = data.orderItems.some((item) => item.group === "eob");
+  const hasStockAlertItems = data.orderItems.some((item) => item.clearsStock);
+
+  const inventoryRowStyle = (item) =>
+    item.clearsStock
+      ? "background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 55%, #fecdd3 100%); border-left: 5px solid #e11d48; border-bottom: 1px solid #fda4af; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);"
+      : "border-bottom: 1px solid #e5e7eb;";
+
+  const productNameHtml = (item) =>
+    item.clearsStock
+      ? `<div style="line-height:1.4;">
+          <span style="color:#374151;font-weight:600;">${item.name}</span>
+          <div style="margin-top:8px;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#881337;background:linear-gradient(135deg,#fecdd3 0%,#fda4af 100%);border:1px solid #fb7185;display:inline-block;box-shadow:0 2px 6px rgba(190,24,93,0.18);">
+            Inventario en cero tras este pedido
+          </div>
+        </div>`
+      : item.name;
 
   // Calculate subtotals for each group
   const obSubtotal = data.orderItems
@@ -27,6 +43,16 @@ const generateEmailContent = (data) => {
         <p style="color: #666; font-size: 16px; margin-bottom: 20px;"><strong>NIT:</strong> ${
           data.shippingAddress.nit
         }</p>
+        
+        ${
+          hasStockAlertItems
+            ? `
+        <div style="margin-bottom: 16px; padding: 14px 18px; border-radius: 10px; background: linear-gradient(90deg, #fef2f2 0%, #fff7ed 100%); border: 2px dashed #f87171; color: #7f1d1d; font-size: 14px; line-height: 1.5;">
+          <strong style="color:#b91c1c;">Aviso de inventario:</strong> Las filas con fondo rosa indican productos que quedarán <strong>sin existencias</strong> al surtir este pedido.
+        </div>
+        `
+            : ""
+        }
         
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: white; border: 2px solid #ac18c8; border-radius: 8px; overflow: hidden;">
           <thead>
@@ -50,8 +76,10 @@ const generateEmailContent = (data) => {
               .filter((item) => item.group === "ob")
               .map(
                 (item) => `
-            <tr style="border-bottom: 1px solid #e5e7eb; transition: background-color 0.2s;">
-              <td style="padding: 12px 15px; color: #374151;">${item.name}</td>
+            <tr style="${inventoryRowStyle(item)}">
+              <td style="padding: 12px 15px; color: #374151;">${productNameHtml(
+                item
+              )}</td>
               <td style="padding: 12px 15px; text-align: center; color: #374151; font-weight: 500;">${
                 item.quantity
               }</td>
@@ -84,8 +112,10 @@ const generateEmailContent = (data) => {
               .filter((item) => item.group === "eob")
               .map(
                 (item) => `
-            <tr style="border-bottom: 1px solid #e5e7eb; transition: background-color 0.2s;">
-              <td style="padding: 12px 15px; color: #374151;">${item.name}</td>
+            <tr style="${inventoryRowStyle(item)}">
+              <td style="padding: 12px 15px; color: #374151;">${productNameHtml(
+                item
+              )}</td>
               <td style="padding: 12px 15px; text-align: center; color: #374151; font-weight: 500;">${
                 item.quantity
               }</td>
