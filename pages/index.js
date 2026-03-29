@@ -5,13 +5,14 @@ import { Store } from "@/utils/Store";
 import db from "@/utils/db";
 import axios from "axios";
 import Image from "next/image";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { toast } from "react-toastify";
 import Tilt from "react-parallax-tilt";
 import { motion } from "framer-motion";
 import { fadeIn } from "@/utils/motion";
 import SearchBar from "@/components/SearchBar";
 import { clearsStockFlag } from "@/utils/cartStock";
+import { DocumentArrowDownIcon } from "@heroicons/react/24/solid";
 
 const productsDetails = [
   {
@@ -83,6 +84,7 @@ const ServiceCard = ({ index, title, icon }) => {
 export default function Home({ products }) {
   const { state, dispatch } = useContext(Store);
   const { cart, selectedCategory, modal } = state;
+  const [catalogPdfLoading, setCatalogPdfLoading] = useState(false);
 
   const categoryHandler = (categoryId) => {
     dispatch({ type: "SET_SELECTED_CATEGORY", payload: categoryId });
@@ -114,6 +116,28 @@ export default function Home({ products }) {
       },
     });
     toast.success("Producto agregado al carrito");
+  };
+
+  const catalogPdfHandler = async () => {
+    const available = products.filter((p) => p.countInStock > 0);
+    if (available.length === 0) {
+      toast.error("No hay productos en stock para el catálogo");
+      return;
+    }
+    setCatalogPdfLoading(true);
+    try {
+      const { generateCatalogPdf } = await import("@/utils/generateCatalogPdf");
+      await generateCatalogPdf(products);
+      toast.success("Catálogo descargado");
+    } catch (err) {
+      if (err?.message === "NO_STOCK") {
+        toast.error("No hay productos en stock para el catálogo");
+      } else {
+        toast.error("No se pudo generar el catálogo. Intenta de nuevo.");
+      }
+    } finally {
+      setCatalogPdfLoading(false);
+    }
   };
 
   return (
@@ -157,6 +181,21 @@ export default function Home({ products }) {
           </div>
         </div>
       )}
+      <button
+        type="button"
+        onClick={catalogPdfHandler}
+        disabled={catalogPdfLoading}
+        aria-busy={catalogPdfLoading}
+        aria-label="Descargar catálogo en PDF"
+        title="Descargar catálogo PDF"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-5 py-3.5 text-sm font-semibold text-white shadow-lg ring-1 ring-white/10 transition hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:ring-black/5 dark:hover:bg-white dark:focus-visible:outline-gray-200"
+      >
+        <DocumentArrowDownIcon
+          className={`h-5 w-5 shrink-0 ${catalogPdfLoading ? "animate-pulse" : ""}`}
+          aria-hidden
+        />
+        {catalogPdfLoading ? "Generando…" : "Catálogo"}
+      </button>
     </Layout>
   );
 }
