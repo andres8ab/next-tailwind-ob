@@ -76,6 +76,7 @@ function splitCatalogName(rawName) {
  *   image: string;
  *   price: number;
  *   category: string;
+ *   group?: string;
  *   countInStock: number;
  * }>} products
  */
@@ -302,5 +303,7 @@ export async function generateCatalogPdf(products) {
   });
 
   const safeName = `catalogo-ob-${new Date().toISOString().slice(0, 10)}.pdf`;
-  doc.save(safeName);
+  const blob = doc.output("blob");
+  const blobUrl = URL.createObjectURL(blob);
+  return { blobUrl, fileName: safeName };
 }

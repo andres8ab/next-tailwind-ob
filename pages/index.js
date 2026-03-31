@@ -85,6 +85,7 @@ export default function Home({ products }) {
   const { state, dispatch } = useContext(Store);
   const { cart, selectedCategory, modal } = state;
   const [catalogPdfLoading, setCatalogPdfLoading] = useState(false);
+  const [showCatalogOptions, setShowCatalogOptions] = useState(false);
 
   const categoryHandler = (categoryId) => {
     dispatch({ type: "SET_SELECTED_CATEGORY", payload: categoryId });
@@ -118,18 +119,81 @@ export default function Home({ products }) {
     toast.success("Producto agregado al carrito");
   };
 
-  const catalogPdfHandler = async () => {
-    const available = products.filter((p) => p.countInStock > 0);
+  const isIOS = () => {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent || "";
+    return (
+      /iPad|iPhone|iPod/i.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+    );
+  };
+
+  const openOrDownloadCatalog = (blobUrl, fileName) => {
+    const shouldOpen = window.confirm(
+      "Catálogo generado. Presiona Aceptar para abrirlo en una nueva pestaña o Cancelar para descargarlo.",
+    );
+
+    if (shouldOpen) {
+      const newTab = window.open(blobUrl, "_blank", "noopener,noreferrer");
+      if (newTab) return;
+
+      const openLink = document.createElement("a");
+      openLink.href = blobUrl;
+      openLink.target = "_blank";
+      openLink.rel = "noopener noreferrer";
+      document.body.appendChild(openLink);
+      openLink.click();
+      openLink.remove();
+
+      // Final fallback for browsers that block new tabs after async tasks.
+      setTimeout(() => {
+        if (!document.hidden) {
+          window.location.assign(blobUrl);
+        }
+      }, 120);
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  const catalogPdfHandler = async (scope = "todos") => {
+    const available = products.filter(
+      (p) => p.countInStock > 0 && (scope === "ob" ? p.group === "ob" : true),
+    );
     if (available.length === 0) {
       toast.error("No hay productos en stock para el catálogo");
       return;
     }
+
+    let previewWindow = null;
+    if (isIOS()) {
+      previewWindow = window.open("about:blank", "_blank");
+    }
+
     setCatalogPdfLoading(true);
     try {
       const { generateCatalogPdf } = await import("@/utils/generateCatalogPdf");
-      await generateCatalogPdf(products);
-      toast.success("Catálogo descargado");
+      const { blobUrl, fileName } = await generateCatalogPdf(available);
+
+      if (previewWindow && !previewWindow.closed) {
+        previewWindow.location.href = blobUrl;
+        toast.success("Catálogo abierto en una nueva pestaña");
+      } else {
+        openOrDownloadCatalog(blobUrl, fileName);
+        toast.success("Catálogo generado");
+      }
+
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
     } catch (err) {
+      if (previewWindow && !previewWindow.closed) {
+        previewWindow.close();
+      }
       if (err?.message === "NO_STOCK") {
         toast.error("No hay productos en stock para el catálogo");
       } else {
@@ -181,9 +245,50 @@ export default function Home({ products }) {
           </div>
         </div>
       )}
+      {showCatalogOptions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl dark:bg-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Generar catálogo
+            </h3>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+              Selecciona el grupo de productos para el PDF.
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                className="rounded-lg bg-gray-900 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
+                onClick={() => {
+                  setShowCatalogOptions(false);
+                  catalogPdfHandler("ob");
+                }}
+              >
+                OB
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-gray-200 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+                onClick={() => {
+                  setShowCatalogOptions(false);
+                  catalogPdfHandler("todos");
+                }}
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                className="rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                onClick={() => setShowCatalogOptions(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <button
         type="button"
-        onClick={catalogPdfHandler}
+        onClick={() => setShowCatalogOptions(true)}
         disabled={catalogPdfLoading}
         aria-busy={catalogPdfLoading}
         aria-label="Descargar catálogo en PDF"
