@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const LOGO_PATH = "/logos/logoob.jpg";
+const LOGO_PATH = "/logos/logoob.png";
 const TITLE = "CATÁLOGO DE PRODUCTOS";
 
 /** @param {string} path */
@@ -35,13 +35,79 @@ function dataUrlFormat(dataUrl) {
 }
 
 /** @param {string} dataUrl */
-function loadImageDimensions(dataUrl) {
+function loadImageElement(dataUrl) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+    img.onload = () => resolve(img);
     img.onerror = () => reject(new Error("Image decode failed"));
     img.src = dataUrl;
   });
+}
+
+async function optimizeImageForPdf(url, opts = {}) {
+  const {
+    maxWidth = 900,
+    maxHeight = 520,
+    quality = 0.68,
+    forceJpeg = true,
+    cornerRadiusPx = 0,
+  } = opts;
+
+  const original = await fetchAsDataUrl(url);
+  const img = await loadImageElement(original);
+  const sourceW = img.naturalWidth || img.width || 1;
+  const sourceH = img.naturalHeight || img.height || 1;
+  const scale = Math.min(1, maxWidth / sourceW, maxHeight / sourceH);
+  const targetW = Math.max(1, Math.round(sourceW * scale));
+  const targetH = Math.max(1, Math.round(sourceH * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return {
+      dataUrl: original,
+      format: dataUrlFormat(original),
+      w: sourceW,
+      h: sourceH,
+    };
+  }
+
+  const drawRoundedRectPath = (x, y, w, h, radius) => {
+    const r = Math.max(0, Math.min(radius, Math.min(w, h) / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+  };
+
+  // Keep transparent PNGs readable in JPEG by painting white background first.
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, targetW, targetH);
+
+  if (cornerRadiusPx > 0) {
+    drawRoundedRectPath(0, 0, targetW, targetH, cornerRadiusPx);
+    ctx.clip();
+  }
+
+  ctx.drawImage(img, 0, 0, targetW, targetH);
+
+  const mime = forceJpeg ? "image/jpeg" : "image/webp";
+  const optimized = canvas.toDataURL(mime, quality);
+  return {
+    dataUrl: optimized,
+    format: "JPEG",
+    w: targetW,
+    h: targetH,
+  };
 }
 
 /**
@@ -64,7 +130,10 @@ function splitCatalogName(rawName) {
   }
   return {
     ref: s.slice(0, i).toUpperCase(),
-    description: s.slice(i + 1).trim().toUpperCase(),
+    description: s
+      .slice(i + 1)
+      .trim()
+      .toUpperCase(),
   };
 }
 
@@ -108,14 +177,12 @@ export async function generateCatalogPdf(products) {
     const key = String(p._id);
     const url = resolveAssetUrl(p.image);
     try {
-      const dataUrl = await fetchAsDataUrl(url);
-      const { w, h } = await loadImageDimensions(dataUrl);
-      imageMeta.set(key, {
-        dataUrl,
-        format: dataUrlFormat(dataUrl),
-        w,
-        h,
+      const optimized = await optimizeImageForPdf(url, {
+        maxWidth: 900,
+        maxHeight: 520,
+        quality: 0.68,
       });
+      imageMeta.set(key, optimized);
     } catch {
       imageMeta.set(key, null);
     }
@@ -123,12 +190,22 @@ export async function generateCatalogPdf(products) {
 
   let logoDataUrl = null;
   try {
-    logoDataUrl = await fetchAsDataUrl(resolveAssetUrl(LOGO_PATH));
+    logoDataUrl = await optimizeImageForPdf(resolveAssetUrl(LOGO_PATH), {
+      maxWidth: 420,
+      maxHeight: 200,
+      quality: 0.72,
+      cornerRadiusPx: 24,
+    });
   } catch {
     logoDataUrl = null;
   }
 
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+    compress: true,
+  });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 14;
@@ -137,15 +214,28 @@ export async function generateCatalogPdf(products) {
   const logoBox = 22;
 
   if (logoDataUrl) {
-    const fmt = dataUrlFormat(logoDataUrl);
     try {
-      const { w: lw, h: lh } = await loadImageDimensions(logoDataUrl);
+      const { w: lw, h: lh } = logoDataUrl;
       const scale = Math.min(logoBox / lw, logoBox / lh);
       const dw = lw * scale;
       const dh = lh * scale;
-      doc.addImage(logoDataUrl, fmt, margin, headerY, dw, dh);
+      doc.addImage(
+        logoDataUrl.dataUrl,
+        logoDataUrl.format,
+        margin,
+        headerY,
+        dw,
+        dh,
+      );
     } catch {
-      doc.addImage(logoDataUrl, fmt, margin, headerY, logoBox, logoBox);
+      doc.addImage(
+        logoDataUrl.dataUrl,
+        logoDataUrl.format,
+        margin,
+        headerY,
+        logoBox,
+        logoBox,
+      );
     }
   }
 

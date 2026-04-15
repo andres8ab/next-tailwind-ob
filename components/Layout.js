@@ -75,19 +75,24 @@ function Layout({ title, children }) {
         <link
           rel="apple-touch-icon"
           sizes="180x180"
-          href="/apple-touch-icon.png"
+          href="/apple-icon.png"
+        />
+        <link
+          rel="icon"
+          type="image/x-icon"
+          href="/favicon.ico"
         />
         <link
           rel="icon"
           type="image/png"
-          sizes="32x32"
-          href="/favicon-32x32.png"
+          sizes="192x192"
+          href="/web-app-manifest-192x192.png"
         />
         <link
           rel="icon"
           type="image/png"
-          sizes="16x16"
-          href="/favicon-16x16.png"
+          sizes="512x512"
+          href="/web-app-manifest-512x512.png"
         />
         <link rel="manifest" href="/site.webmanifest" />
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5" />
@@ -103,10 +108,10 @@ function Layout({ title, children }) {
             <Link href="/" className="text-lg font-bold">
               <Image
                 className="rounded w-auto h-auto"
-                src="/logos/logoob.jpg"
+                src="/logos/logoob.png"
                 alt="logo ob"
-                width={50}
-                height={50}
+                width={40}
+                height={40}
               />
             </Link>
             <div className="mx-auto hidden justify-center md:flex">

@@ -86,6 +86,7 @@ export default function Home({ products }) {
   const { cart, selectedCategory, modal } = state;
   const [catalogPdfLoading, setCatalogPdfLoading] = useState(false);
   const [showCatalogOptions, setShowCatalogOptions] = useState(false);
+  const [catalogScope, setCatalogScope] = useState("todos");
 
   const categoryHandler = (categoryId) => {
     dispatch({ type: "SET_SELECTED_CATEGORY", payload: categoryId });
@@ -119,41 +120,7 @@ export default function Home({ products }) {
     toast.success("Producto agregado al carrito");
   };
 
-  const isIOS = () => {
-    if (typeof navigator === "undefined") return false;
-    const ua = navigator.userAgent || "";
-    return (
-      /iPad|iPhone|iPod/i.test(ua) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-    );
-  };
-
-  const openOrDownloadCatalog = (blobUrl, fileName) => {
-    const shouldOpen = window.confirm(
-      "Catálogo generado. Presiona Aceptar para abrirlo en una nueva pestaña o Cancelar para descargarlo.",
-    );
-
-    if (shouldOpen) {
-      const newTab = window.open(blobUrl, "_blank", "noopener,noreferrer");
-      if (newTab) return;
-
-      const openLink = document.createElement("a");
-      openLink.href = blobUrl;
-      openLink.target = "_blank";
-      openLink.rel = "noopener noreferrer";
-      document.body.appendChild(openLink);
-      openLink.click();
-      openLink.remove();
-
-      // Final fallback for browsers that block new tabs after async tasks.
-      setTimeout(() => {
-        if (!document.hidden) {
-          window.location.assign(blobUrl);
-        }
-      }, 120);
-      return;
-    }
-
+  const downloadCatalog = (blobUrl, fileName) => {
     const link = document.createElement("a");
     link.href = blobUrl;
     link.download = fileName;
@@ -162,7 +129,33 @@ export default function Home({ products }) {
     link.remove();
   };
 
-  const catalogPdfHandler = async (scope = "todos") => {
+  const openCatalogInNewTab = (blobUrl, previewWindow) => {
+    if (previewWindow && !previewWindow.closed) {
+      previewWindow.location.href = blobUrl;
+      return true;
+    }
+
+    const newTab = window.open(blobUrl, "_blank", "noopener,noreferrer");
+    if (newTab) return true;
+
+    const openLink = document.createElement("a");
+    openLink.href = blobUrl;
+    openLink.target = "_blank";
+    openLink.rel = "noopener noreferrer";
+    document.body.appendChild(openLink);
+    openLink.click();
+    openLink.remove();
+
+    // Final fallback when popup blockers reject background tab opening.
+    setTimeout(() => {
+      if (!document.hidden) {
+        window.location.assign(blobUrl);
+      }
+    }, 120);
+    return false;
+  };
+
+  const catalogPdfHandler = async (scope = "todos", output = "open") => {
     const available = products.filter(
       (p) => p.countInStock > 0 && (scope === "ob" ? p.group === "ob" : true),
     );
@@ -172,7 +165,7 @@ export default function Home({ products }) {
     }
 
     let previewWindow = null;
-    if (isIOS()) {
+    if (output === "open") {
       previewWindow = window.open("about:blank", "_blank");
     }
 
@@ -181,12 +174,12 @@ export default function Home({ products }) {
       const { generateCatalogPdf } = await import("@/utils/generateCatalogPdf");
       const { blobUrl, fileName } = await generateCatalogPdf(available);
 
-      if (previewWindow && !previewWindow.closed) {
-        previewWindow.location.href = blobUrl;
-        toast.success("Catálogo abierto en una nueva pestaña");
+      if (output === "open") {
+        openCatalogInNewTab(blobUrl, previewWindow);
+        toast.success("Catálogo abierto");
       } else {
-        openOrDownloadCatalog(blobUrl, fileName);
-        toast.success("Catálogo generado");
+        downloadCatalog(blobUrl, fileName);
+        toast.success("Catálogo descargado");
       }
 
       setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
@@ -252,28 +245,56 @@ export default function Home({ products }) {
               Generar catálogo
             </h3>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-              Selecciona el grupo de productos para el PDF.
+              Selecciona grupo y salida del PDF.
             </p>
+            <div className="mt-4 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+              <div className="grid grid-cols-2 gap-1">
+                <button
+                  type="button"
+                  className={`rounded-md py-2 text-sm font-semibold transition ${
+                    catalogScope === "ob"
+                      ? "bg-white text-gray-900 shadow dark:bg-gray-900 dark:text-gray-100"
+                      : "text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
+                  }`}
+                  onClick={() => setCatalogScope("ob")}
+                >
+                  OB
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-md py-2 text-sm font-semibold transition ${
+                    catalogScope === "todos"
+                      ? "bg-white text-gray-900 shadow dark:bg-gray-900 dark:text-gray-100"
+                      : "text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
+                  }`}
+                  onClick={() => setCatalogScope("todos")}
+                >
+                  Todos
+                </button>
+              </div>
+            </div>
             <div className="mt-4 grid grid-cols-1 gap-2">
               <button
                 type="button"
-                className="rounded-lg bg-gray-900 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
+                disabled={catalogPdfLoading}
+                className="rounded-lg bg-gray-900 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
                 onClick={() => {
                   setShowCatalogOptions(false);
-                  catalogPdfHandler("ob");
+                  catalogPdfHandler(catalogScope, "open");
                 }}
               >
-                OB
+                Abrir PDF
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-gray-200 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+                disabled={catalogPdfLoading}
+                className="rounded-lg bg-gray-200 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
                 onClick={() => {
                   setShowCatalogOptions(false);
-                  catalogPdfHandler("todos");
+                  catalogPdfHandler(catalogScope, "download");
                 }}
               >
-                Todos
+                Descargar PDF
               </button>
               <button
                 type="button"
@@ -288,7 +309,10 @@ export default function Home({ products }) {
       )}
       <button
         type="button"
-        onClick={() => setShowCatalogOptions(true)}
+        onClick={() => {
+          setCatalogScope("todos");
+          setShowCatalogOptions(true);
+        }}
         disabled={catalogPdfLoading}
         aria-busy={catalogPdfLoading}
         aria-label="Descargar catálogo en PDF"
