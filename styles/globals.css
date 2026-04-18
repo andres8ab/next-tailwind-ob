@@ -32,10 +32,18 @@ body {
     sans-serif;
 }
 
-body {
-  @apply dark:text-gray-100
-  bg-[url('/logos/light-bg.jpg')] dark:bg-[url('/logos/dark-bg.jpg')];
+html {
+  background-color: #f8fafc;
 }
+html.dark {
+  background-color: #020617;
+}
+
+body {
+  @apply dark:text-gray-100;
+  background-color: transparent;
+}
+
 
 a {
   @apply text-blue-600 hover:text-blue-800 dark:text-teal-500 hover:dark:text-teal-700;
@@ -51,13 +59,14 @@ input,
 select,
 textarea {
   @apply rounded-lg border border-gray-300 dark:border-gray-600 p-2.5 outline-none ring-red-300 dark:ring-red-700 focus:ring-2 focus:border-red-500 dark:focus:border-red-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all duration-200;
+  font-size: 16px !important;
 }
 
 .card {
   @apply grid items-stretch mb-5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300;
 }
 .product-card {
-  @apply grid items-stretch mb-5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-800/60 shadow-md hover:scale-[1.02] hover:shadow-2xl transition-all duration-300;
+  @apply grid items-stretch mb-5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/40 dark:bg-gray-800/40 shadow-md hover:scale-[1.02] hover:shadow-2xl transition-all duration-300;
 }
 
 .primary-button {
@@ -85,8 +94,8 @@ textarea {
 
 .green-pink-gradient {
   background: "#00cea8";
-  background: linear-gradient(90.13deg, #00cea8 1.9%, #bf61ff 97.5%);
-  background: -webkit-linear-gradient(-90.13deg, #00cea8 1.9%, #bf61ff 97.5%);
+  background: linear-gradient(90.13deg, #00cea8 1.9%, #644fdc 97.5%);
+  background: -webkit-linear-gradient(-90.13deg, #00cea8 1.9%, #644fdc 97.5%);
 }
 
 .shadow-card {
@@ -94,12 +103,6 @@ textarea {
   --tw-shadow-colored: 0px 35px 120px -15px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
     var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-}
-
-input,
-select,
-textarea {
-  font-size: 16px !important;
 }
 
 @media (min-width: 640px) {

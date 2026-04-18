@@ -4,6 +4,7 @@ import { StoreProvider } from "@/utils/Store";
 import { useRouter } from "next/router";
 import { ThemeProvider } from "next-themes";
 import { useScrollRestoration } from "next-restore-scroll-position";
+import BackgroundEffect from "@/components/BackgroundEffect";
 
 export default function App({
   Component,
@@ -20,6 +21,7 @@ export default function App({
             attribute="class"
             defaultTheme="dark"
           >
+            <BackgroundEffect />
             {Component.auth ? (
               <Auth adminOnly={Component.auth.adminOnly}>
                 <Component {...pageProps} />
