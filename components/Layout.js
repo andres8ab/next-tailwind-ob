@@ -278,7 +278,7 @@ function Layout({ title, children }) {
         </header>
         <main className="container m-auto mt-16 px-4">{children}</main>
         <footer className="flex h-10 justify-center items-center shadow-inner">
-          <p>Copyright ©️ 2026 OB</p>
+          <p>Copyright ©️ {new Date().getFullYear()} OB</p>
         </footer>
       </div>
     </div>

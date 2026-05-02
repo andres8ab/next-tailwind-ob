@@ -36,6 +36,7 @@ function reducer(state, action) {
 export default function AdminProductsScreen() {
   const router = useRouter();
   const [sortOrder, setSortOrder] = useState("asc"); // 'asc' or 'desc'
+  const [filterQuery, setFilterQuery] = useState("");
 
   const [
     { loading, error, products, loadingCreate, successDelete, loadingDelete },
@@ -46,7 +47,24 @@ export default function AdminProductsScreen() {
     error: "",
   });
 
-  const sortedProducts = [...products].sort(function (a, b) {
+  const q = filterQuery.trim().toLowerCase();
+  const filteredProducts =
+    q.length === 0
+      ? products
+      : products.filter((p) => {
+          const name = (p.name || "").toLowerCase();
+          const category = (p.category || "").toLowerCase();
+          const id = String(p._id || "").toLowerCase();
+          const price = String(p.price ?? "");
+          return (
+            name.includes(q) ||
+            category.includes(q) ||
+            id.includes(q) ||
+            price.includes(q)
+          );
+        });
+
+  const sortedProducts = [...filteredProducts].sort(function (a, b) {
     const comparison = a.name.localeCompare(b.name, undefined, {
       sensitivity: "base",
     });
@@ -126,16 +144,78 @@ export default function AdminProductsScreen() {
           </ul>
         </div>
         <div className="overflow-x-auto md:col-span-3">
-          <div className="flex justify-between">
-            <h1 className="mb-4 text-xl">Productos</h1>
-            {loadingDelete && <div>Eliminando item...</div>}
-            <button
-              disabled={loadingCreate}
-              onClick={createHandler}
-              className="primary-button"
-            >
-              {loadingCreate ? "Cargando" : "Crear"}
-            </button>
+          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 max-w-xl flex-1">
+              <h1 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Productos
+              </h1>
+              <label htmlFor="admin-product-filter" className="sr-only">
+                Filtrar productos
+              </label>
+              <div className="relative">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <input
+                  id="admin-product-filter"
+                  type="search"
+                  autoComplete="off"
+                  placeholder="Buscar por nombre, categoría, precio o ID…"
+                  value={filterQuery}
+                  onChange={(e) => setFilterQuery(e.target.value)}
+                  className="w-full border-gray-200 py-2.5 pl-10 pr-10 shadow-sm dark:border-gray-600"
+                />
+                {filterQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => setFilterQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-600 dark:hover:text-gray-200"
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-3 self-start">
+              {loadingDelete && (
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Eliminando item...
+                </span>
+              )}
+              <button
+                disabled={loadingCreate}
+                onClick={createHandler}
+                className="primary-button"
+              >
+                {loadingCreate ? "Cargando" : "Crear"}
+              </button>
+            </div>
           </div>
           {loading ? (
             <div>Cargando...</div>
