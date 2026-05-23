@@ -1,141 +1,13 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import {
+  LOGO_PATH,
+  optimizeCatalogImage,
+  resolveAssetUrl,
+} from "@/utils/catalogAssets";
+import { formatCatalogPrice, splitCatalogName } from "@/utils/catalogFormat";
 
-const LOGO_PATH = "/logos/logoob.png";
 const TITLE = "CATÁLOGO DE PRODUCTOS";
-
-/** @param {string} path */
-function resolveAssetUrl(path) {
-  if (typeof window === "undefined") return path;
-  if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  if (path.startsWith("/")) return `${window.location.origin}${path}`;
-  return `${window.location.origin}/${path}`;
-}
-
-/** @param {string} url */
-async function fetchAsDataUrl(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to load: ${url}`);
-  const blob = await res.blob();
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onloadend = () => resolve(/** @type {string} */ (r.result));
-    r.onerror = reject;
-    r.readAsDataURL(blob);
-  });
-}
-
-/** @param {string} dataUrl */
-function dataUrlFormat(dataUrl) {
-  if (dataUrl.includes("image/png")) return "PNG";
-  if (dataUrl.includes("image/jpeg") || dataUrl.includes("image/jpg"))
-    return "JPEG";
-  if (dataUrl.includes("image/webp")) return "WEBP";
-  return "PNG";
-}
-
-/** @param {string} dataUrl */
-function loadImageElement(dataUrl) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Image decode failed"));
-    img.src = dataUrl;
-  });
-}
-
-async function optimizeImageForPdf(url, opts = {}) {
-  const {
-    maxWidth = 900,
-    maxHeight = 520,
-    quality = 0.68,
-    forceJpeg = true,
-    cornerRadiusPx = 0,
-  } = opts;
-
-  const original = await fetchAsDataUrl(url);
-  const img = await loadImageElement(original);
-  const sourceW = img.naturalWidth || img.width || 1;
-  const sourceH = img.naturalHeight || img.height || 1;
-  const scale = Math.min(1, maxWidth / sourceW, maxHeight / sourceH);
-  const targetW = Math.max(1, Math.round(sourceW * scale));
-  const targetH = Math.max(1, Math.round(sourceH * scale));
-
-  const canvas = document.createElement("canvas");
-  canvas.width = targetW;
-  canvas.height = targetH;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    return {
-      dataUrl: original,
-      format: dataUrlFormat(original),
-      w: sourceW,
-      h: sourceH,
-    };
-  }
-
-  const drawRoundedRectPath = (x, y, w, h, radius) => {
-    const r = Math.max(0, Math.min(radius, Math.min(w, h) / 2));
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.arcTo(x + w, y, x + w, y + r, r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h);
-    ctx.arcTo(x, y + h, x, y + h - r, r);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + r, y, r);
-    ctx.closePath();
-  };
-
-  // Keep transparent PNGs readable in JPEG by painting white background first.
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, targetW, targetH);
-
-  if (cornerRadiusPx > 0) {
-    drawRoundedRectPath(0, 0, targetW, targetH, cornerRadiusPx);
-    ctx.clip();
-  }
-
-  ctx.drawImage(img, 0, 0, targetW, targetH);
-
-  const mime = forceJpeg ? "image/jpeg" : "image/webp";
-  const optimized = canvas.toDataURL(mime, quality);
-  return {
-    dataUrl: optimized,
-    format: "JPEG",
-    w: targetW,
-    h: targetH,
-  };
-}
-
-/**
- * @param {number} price
- * @returns {string}
- */
-function formatCatalogPrice(price) {
-  return "$ " + Number(price).toLocaleString("es-AR");
-}
-
-/**
- * Name format: "AL-005 Alternador NPR" → ref "AL-005", description "Alternador NPR".
- * @returns {{ ref: string; description: string }}
- */
-function splitCatalogName(rawName) {
-  const s = String(rawName).trim();
-  const i = s.search(/\s/);
-  if (i === -1) {
-    return { ref: s.toUpperCase(), description: "" };
-  }
-  return {
-    ref: s.slice(0, i).toUpperCase(),
-    description: s
-      .slice(i + 1)
-      .trim()
-      .toUpperCase(),
-  };
-}
 
 /**
  * @param {Array<{
@@ -177,7 +49,7 @@ export async function generateCatalogPdf(products) {
     const key = String(p._id);
     const url = resolveAssetUrl(p.image);
     try {
-      const optimized = await optimizeImageForPdf(url, {
+      const optimized = await optimizeCatalogImage(url, {
         maxWidth: 900,
         maxHeight: 520,
         quality: 0.68,
@@ -190,7 +62,7 @@ export async function generateCatalogPdf(products) {
 
   let logoDataUrl = null;
   try {
-    logoDataUrl = await optimizeImageForPdf(resolveAssetUrl(LOGO_PATH), {
+    logoDataUrl = await optimizeCatalogImage(resolveAssetUrl(LOGO_PATH), {
       maxWidth: 420,
       maxHeight: 200,
       quality: 0.72,
@@ -221,7 +93,7 @@ export async function generateCatalogPdf(products) {
       const dh = lh * scale;
       doc.addImage(
         logoDataUrl.dataUrl,
-        logoDataUrl.format,
+        "JPEG",
         margin,
         headerY,
         dw,
@@ -230,7 +102,7 @@ export async function generateCatalogPdf(products) {
     } catch {
       doc.addImage(
         logoDataUrl.dataUrl,
-        logoDataUrl.format,
+        "JPEG",
         margin,
         headerY,
         logoBox,
@@ -263,23 +135,26 @@ export async function generateCatalogPdf(products) {
 
   const tableStartY = headerY + logoBox + 10;
 
-  /** Use full width: fixed cols + description absorbs the remainder (no phantom column). */
   const tableInnerWidth = pageWidth - 2 * margin;
-  const colRef = 34;
-  const colImg = 42;
-  const colPrice = 28;
-  const colName = Math.max(48, tableInnerWidth - colRef - colImg - colPrice);
+  const colRef = 28;
+  const colImg = 36;
+  const colPrice = 24;
+  const colQty = 14;
+  const colName = Math.max(
+    40,
+    tableInnerWidth - colRef - colImg - colPrice - colQty,
+  );
 
   const body = [];
 
-  /** @type {Map<number, { dataUrl: string; format: string; w: number; h: number } | null>} */
+  /** @type {Map<number, { dataUrl: string; w: number; h: number } | null>} */
   const imagesByBodyRow = new Map();
 
   for (const category of categories) {
     body.push([
       {
         content: category.toUpperCase(),
-        colSpan: 4,
+        colSpan: 5,
         styles: {
           fillColor: [0, 0, 0],
           textColor: 255,
@@ -325,6 +200,15 @@ export async function generateCatalogPdf(products) {
             valign: "middle",
           },
         },
+        {
+          content: "",
+          styles: {
+            halign: "center",
+            valign: "middle",
+            minCellHeight: 8,
+            fillColor: [252, 252, 252],
+          },
+        },
       ]);
       imagesByBodyRow.set(rowIdx, imageMeta.get(String(p._id)) ?? null);
     }
@@ -339,7 +223,7 @@ export async function generateCatalogPdf(products) {
     tableLineWidth: 0.15,
     tableLineColor: [0, 0, 0],
     showHead: "everyPage",
-    head: [["Ref.", "Descripción", "Imagen", "Precio"]],
+    head: [["Ref.", "Descripción", "Imagen", "Precio", "Cant."]],
     headStyles: {
       fillColor: [245, 245, 245],
       textColor: [0, 0, 0],
@@ -365,6 +249,7 @@ export async function generateCatalogPdf(products) {
       1: { cellWidth: colName },
       2: { cellWidth: colImg },
       3: { cellWidth: colPrice },
+      4: { cellWidth: colQty },
     },
     didDrawCell: (data) => {
       if (data.section !== "body" || data.column.index !== 2) return;
@@ -380,7 +265,7 @@ export async function generateCatalogPdf(products) {
       const dh = meta.h * scale;
       const x = cell.x + (cell.width - dw) / 2;
       const y = cell.y + (cell.height - dh) / 2;
-      doc.addImage(meta.dataUrl, meta.format, x, y, dw, dh);
+      doc.addImage(meta.dataUrl, "JPEG", x, y, dw, dh);
     },
     didDrawPage: (data) => {
       doc.setFontSize(8);
@@ -391,6 +276,20 @@ export async function generateCatalogPdf(products) {
       doc.setTextColor(0, 0, 0);
     },
   });
+
+  const finalY = doc.lastAutoTable?.finalY ?? tableStartY;
+  const footerY = finalY + 8;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(60, 60, 60);
+  doc.text(
+    "Para cantidades editables y copiar el pedido, usá el catálogo HTML (.html) desde la app.",
+    margin,
+    footerY,
+    { maxWidth: pageWidth - 2 * margin },
+  );
+  doc.setTextColor(0, 0, 0);
 
   const safeName = `catalogo-ob-${new Date().toISOString().slice(0, 10)}.pdf`;
   const blob = doc.output("blob");

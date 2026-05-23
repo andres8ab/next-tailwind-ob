@@ -26,6 +26,24 @@ function reducer(state, action) {
       Cookies.set("cart", JSON.stringify({ ...state.cart, cartItems }));
       return { ...state, cart: { ...state.cart, cartItems } };
     }
+    case "CART_IMPORT_ITEMS": {
+      const { items } = action.payload;
+      let cartItems = [...state.cart.cartItems];
+
+      for (const newItem of items) {
+        const existItem = cartItems.find((item) => item.slug === newItem.slug);
+        if (existItem) {
+          cartItems = cartItems.map((item) =>
+            item.slug === newItem.slug ? newItem : item
+          );
+        } else {
+          cartItems.push(newItem);
+        }
+      }
+
+      Cookies.set("cart", JSON.stringify({ ...state.cart, cartItems }));
+      return { ...state, cart: { ...state.cart, cartItems } };
+    }
     case "CART_REMOVE_ITEM": {
       const cartItems = state.cart.cartItems.filter(
         (item) => item.slug !== action.payload.slug

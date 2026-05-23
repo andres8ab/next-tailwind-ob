@@ -1,49 +1,51 @@
-import Layout from '@/components/Layout'
-import { Store } from '@/utils/Store'
-import Image from 'next/image'
-import Link from 'next/link'
-import React, { useContext } from 'react'
-import XCricleIcon from '@heroicons/react/24/outline/XCircleIcon'
-import { useRouter } from 'next/router'
-import dynamic from 'next/dynamic'
-import axios from 'axios'
-import { toast } from 'react-toastify'
-import { clearsStockFlag } from '@/utils/cartStock'
+import Layout from "@/components/Layout";
+import { Store } from "@/utils/Store";
+import Image from "next/image";
+import Link from "next/link";
+import React, { useContext } from "react";
+import XCricleIcon from "@heroicons/react/24/outline/XCircleIcon";
+import { useRouter } from "next/router";
+import dynamic from "next/dynamic";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { clearsStockFlag } from "@/utils/cartStock";
+import ImportOrderPanel from "@/components/ImportOrderPanel";
 
 function CartScreen() {
-  const router = useRouter()
-  const { state, dispatch } = useContext(Store)
+  const router = useRouter();
+  const { state, dispatch } = useContext(Store);
   const {
     cart: { cartItems },
-  } = state
+  } = state;
   const removeItemHandler = (item) => {
-    dispatch({ type: 'CART_REMOVE_ITEM', payload: item })
-  }
+    dispatch({ type: "CART_REMOVE_ITEM", payload: item });
+  };
   const updateCartHandler = async (item, qty) => {
-    const quantity = Number(qty)
-    const { data } = await axios.get(`/api/products/${item._id}`)
+    const quantity = Number(qty);
+    const { data } = await axios.get(`/api/products/${item._id}`);
     if (data.countInStock < quantity) {
-      return toast.error('Lo sentimos. El producto está agotado')
+      return toast.error("Lo sentimos. El producto está agotado");
     }
     dispatch({
-      type: 'CART_ADD_ITEM',
+      type: "CART_ADD_ITEM",
       payload: {
         ...item,
         ...data,
         quantity,
         clearsStock: clearsStockFlag(quantity, data.countInStock),
       },
-    })
-    toast.success('Producto actualizado en el carrito')
-  }
+    });
+    toast.success("Producto actualizado en el carrito");
+  };
 
   const proceedOrderHandler = () => {
-    router.push('login?redirect=/shipping')
-  }
+    router.push("login?redirect=/placeorderClient");
+  };
 
   return (
     <Layout title="Carrito">
       <h1 className="mb-4 text-xl">Carrito</h1>
+      <ImportOrderPanel />
       {cartItems.length === 0 ? (
         <div>
           El Carrito está vacío. <Link href="/">Agrega productos</Link>
@@ -54,15 +56,26 @@ function CartScreen() {
             <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md">
               <thead className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  <th className="px-5 py-3 text-left font-semibold text-gray-900 dark:text-gray-100">Item</th>
-                  <th className="px-5 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">Cantidad</th>
-                  <th className="px-5 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">Precio</th>
-                  <th className="px-5 py-3 font-semibold text-gray-900 dark:text-gray-100">Accion</th>
+                  <th className="px-5 py-3 text-left font-semibold text-gray-900 dark:text-gray-100">
+                    Item
+                  </th>
+                  <th className="px-5 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
+                    Cantidad
+                  </th>
+                  <th className="px-5 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
+                    Precio
+                  </th>
+                  <th className="px-5 py-3 font-semibold text-gray-900 dark:text-gray-100">
+                    Accion
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {cartItems.map((item) => (
-                  <tr key={item.slug} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <tr
+                    key={item.slug}
+                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  >
                     <td className="p-5">
                       <Link
                         href={`/product/${item.slug}`}
@@ -75,7 +88,9 @@ function CartScreen() {
                           width={50}
                           height={50}
                         ></Image>
-                        <span className="text-gray-900 dark:text-gray-100">{item.name}</span>
+                        <span className="text-gray-900 dark:text-gray-100">
+                          {item.name}
+                        </span>
                       </Link>
                     </td>
                     <td className="p-5 text-right">
@@ -93,15 +108,15 @@ function CartScreen() {
                         ))}
                       </select>
                     </td>
-                    <td className="p-5 text-right text-gray-900 dark:text-gray-100 font-medium">${item.price}</td>
+                    <td className="p-5 text-right text-gray-900 dark:text-gray-100 font-medium">
+                      ${item.price}
+                    </td>
                     <td className="p-5 text-center">
                       <button
                         onClick={() => removeItemHandler(item)}
                         className="hover:text-red-600 dark:hover:text-red-400 transition-colors p-1 rounded"
                       >
-                        <XCricleIcon
-                          className="h-5 w-5"
-                        ></XCricleIcon>
+                        <XCricleIcon className="h-5 w-5"></XCricleIcon>
                       </button>
                     </td>
                   </tr>
@@ -130,7 +145,7 @@ function CartScreen() {
         </div>
       )}
     </Layout>
-  )
+  );
 }
 
-export default dynamic(() => Promise.resolve(CartScreen), { ssr: false })
+export default dynamic(() => Promise.resolve(CartScreen), { ssr: false });

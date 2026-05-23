@@ -84,7 +84,7 @@ const ServiceCard = ({ index, title, icon }) => {
 export default function Home({ products }) {
   const { state, dispatch } = useContext(Store);
   const { cart, selectedCategory, modal } = state;
-  const [catalogPdfLoading, setCatalogPdfLoading] = useState(false);
+  const [catalogLoading, setCatalogLoading] = useState(false);
   const [showCatalogOptions, setShowCatalogOptions] = useState(false);
   const [catalogScope, setCatalogScope] = useState("todos");
 
@@ -155,10 +155,17 @@ export default function Home({ products }) {
     return false;
   };
 
-  const catalogPdfHandler = async (scope = "todos", output = "open") => {
-    const available = products.filter(
+  const getCatalogProducts = (scope = "todos") =>
+    products.filter(
       (p) => p.countInStock > 0 && (scope === "ob" ? p.group === "ob" : true),
     );
+
+  const catalogHandler = async (
+    scope = "todos",
+    format = "html",
+    output = "open",
+  ) => {
+    const available = getCatalogProducts(scope);
     if (available.length === 0) {
       toast.error("No hay productos en stock para el catálogo");
       return;
@@ -169,17 +176,31 @@ export default function Home({ products }) {
       previewWindow = window.open("about:blank", "_blank");
     }
 
-    setCatalogPdfLoading(true);
+    setCatalogLoading(true);
     try {
-      const { generateCatalogPdf } = await import("@/utils/generateCatalogPdf");
-      const { blobUrl, fileName } = await generateCatalogPdf(available);
+      const { blobUrl, fileName } =
+        format === "pdf"
+          ? await (
+              await import("@/utils/generateCatalogPdf")
+            ).generateCatalogPdf(available)
+          : await (
+              await import("@/utils/generateCatalogHtml")
+            ).generateCatalogHtml(available);
 
       if (output === "open") {
         openCatalogInNewTab(blobUrl, previewWindow);
-        toast.success("Catálogo abierto");
+        toast.success(
+          format === "html"
+            ? "Catálogo interactivo abierto"
+            : "Catálogo PDF abierto",
+        );
       } else {
         downloadCatalog(blobUrl, fileName);
-        toast.success("Catálogo descargado");
+        toast.success(
+          format === "html"
+            ? "Catálogo HTML descargado. Enviá el archivo por WhatsApp."
+            : "Catálogo PDF descargado",
+        );
       }
 
       setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
@@ -193,7 +214,7 @@ export default function Home({ products }) {
         toast.error("No se pudo generar el catálogo. Intenta de nuevo.");
       }
     } finally {
-      setCatalogPdfLoading(false);
+      setCatalogLoading(false);
     }
   };
 
@@ -245,7 +266,9 @@ export default function Home({ products }) {
               Generar catálogo
             </h3>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-              Selecciona grupo y salida del PDF.
+              Para pedidos por WhatsApp usá el catálogo HTML (cantidades
+              editables y copiar pedido). El PDF es solo para consulta o
+              imprimir.
             </p>
             <div className="mt-4 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
               <div className="grid grid-cols-2 gap-1">
@@ -273,32 +296,64 @@ export default function Home({ products }) {
                 </button>
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-1 gap-2">
+
+            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Catálogo para pedidos (HTML)
+            </p>
+            <div className="mt-2 grid grid-cols-1 gap-2">
               <button
                 type="button"
-                disabled={catalogPdfLoading}
+                disabled={catalogLoading}
                 className="rounded-lg bg-gray-900 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
                 onClick={() => {
                   setShowCatalogOptions(false);
-                  catalogPdfHandler(catalogScope, "open");
+                  catalogHandler(catalogScope, "html", "open");
+                }}
+              >
+                Abrir catálogo interactivo
+              </button>
+              <button
+                type="button"
+                disabled={catalogLoading}
+                className="rounded-lg bg-gray-200 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+                onClick={() => {
+                  setShowCatalogOptions(false);
+                  catalogHandler(catalogScope, "html", "download");
+                }}
+              >
+                Descargar HTML (WhatsApp)
+              </button>
+            </div>
+
+            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Solo consulta (PDF)
+            </p>
+            <div className="mt-2 grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                disabled={catalogLoading}
+                className="rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                onClick={() => {
+                  setShowCatalogOptions(false);
+                  catalogHandler(catalogScope, "pdf", "open");
                 }}
               >
                 Abrir PDF
               </button>
               <button
                 type="button"
-                disabled={catalogPdfLoading}
-                className="rounded-lg bg-gray-200 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+                disabled={catalogLoading}
+                className="rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
                 onClick={() => {
                   setShowCatalogOptions(false);
-                  catalogPdfHandler(catalogScope, "download");
+                  catalogHandler(catalogScope, "pdf", "download");
                 }}
               >
                 Descargar PDF
               </button>
               <button
                 type="button"
-                className="rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="rounded-lg border border-transparent py-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
                 onClick={() => setShowCatalogOptions(false)}
               >
                 Cancelar
@@ -313,17 +368,17 @@ export default function Home({ products }) {
           setCatalogScope("todos");
           setShowCatalogOptions(true);
         }}
-        disabled={catalogPdfLoading}
-        aria-busy={catalogPdfLoading}
-        aria-label="Descargar catálogo en PDF"
-        title="Descargar catálogo PDF"
+        disabled={catalogLoading}
+        aria-busy={catalogLoading}
+        aria-label="Generar catálogo"
+        title="Generar catálogo"
         className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-5 py-3.5 text-sm font-semibold text-white shadow-lg ring-1 ring-white/10 transition hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:ring-black/5 dark:hover:bg-white dark:focus-visible:outline-gray-200"
       >
         <DocumentArrowDownIcon
-          className={`h-5 w-5 shrink-0 ${catalogPdfLoading ? "animate-pulse" : ""}`}
+          className={`h-5 w-5 shrink-0 ${catalogLoading ? "animate-pulse" : ""}`}
           aria-hidden
         />
-        {catalogPdfLoading ? "Generando…" : "Catálogo"}
+        {catalogLoading ? "Generando…" : "Catálogo"}
       </button>
     </Layout>
   );
