@@ -136,14 +136,10 @@ export async function generateCatalogPdf(products) {
   const tableStartY = headerY + logoBox + 10;
 
   const tableInnerWidth = pageWidth - 2 * margin;
-  const colRef = 28;
-  const colImg = 36;
-  const colPrice = 24;
-  const colQty = 14;
-  const colName = Math.max(
-    40,
-    tableInnerWidth - colRef - colImg - colPrice - colQty,
-  );
+  const colRef = 34;
+  const colImg = 42;
+  const colPrice = 28;
+  const colName = Math.max(48, tableInnerWidth - colRef - colImg - colPrice);
 
   const body = [];
 
@@ -154,7 +150,7 @@ export async function generateCatalogPdf(products) {
     body.push([
       {
         content: category.toUpperCase(),
-        colSpan: 5,
+        colSpan: 4,
         styles: {
           fillColor: [0, 0, 0],
           textColor: 255,
@@ -200,15 +196,6 @@ export async function generateCatalogPdf(products) {
             valign: "middle",
           },
         },
-        {
-          content: "",
-          styles: {
-            halign: "center",
-            valign: "middle",
-            minCellHeight: 8,
-            fillColor: [252, 252, 252],
-          },
-        },
       ]);
       imagesByBodyRow.set(rowIdx, imageMeta.get(String(p._id)) ?? null);
     }
@@ -223,7 +210,7 @@ export async function generateCatalogPdf(products) {
     tableLineWidth: 0.15,
     tableLineColor: [0, 0, 0],
     showHead: "everyPage",
-    head: [["Ref.", "Descripción", "Imagen", "Precio", "Cant."]],
+    head: [["Ref.", "Descripción", "Imagen", "Precio"]],
     headStyles: {
       fillColor: [245, 245, 245],
       textColor: [0, 0, 0],
@@ -249,7 +236,6 @@ export async function generateCatalogPdf(products) {
       1: { cellWidth: colName },
       2: { cellWidth: colImg },
       3: { cellWidth: colPrice },
-      4: { cellWidth: colQty },
     },
     didDrawCell: (data) => {
       if (data.section !== "body" || data.column.index !== 2) return;
@@ -276,20 +262,6 @@ export async function generateCatalogPdf(products) {
       doc.setTextColor(0, 0, 0);
     },
   });
-
-  const finalY = doc.lastAutoTable?.finalY ?? tableStartY;
-  const footerY = finalY + 8;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(60, 60, 60);
-  doc.text(
-    "Para cantidades editables y copiar el pedido, usá el catálogo HTML (.html) desde la app.",
-    margin,
-    footerY,
-    { maxWidth: pageWidth - 2 * margin },
-  );
-  doc.setTextColor(0, 0, 0);
 
   const safeName = `catalogo-ob-${new Date().toISOString().slice(0, 10)}.pdf`;
   const blob = doc.output("blob");
