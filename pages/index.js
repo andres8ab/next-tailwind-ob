@@ -160,6 +160,27 @@ export default function Home({ products }) {
       (p) => p.countInStock > 0 && (scope === "ob" ? p.group === "ob" : true),
     );
 
+  const getCatalogPageUrl = (scope = "todos") => {
+    const path = `/catalogo-pedido?scope=${scope === "ob" ? "ob" : "todos"}`;
+    if (typeof window === "undefined") return path;
+    return `${window.location.origin}${path}`;
+  };
+
+  const openCatalogPage = (scope = "todos") => {
+    window.open(getCatalogPageUrl(scope), "_blank", "noopener,noreferrer");
+    toast.success("Catálogo abierto en el navegador");
+  };
+
+  const copyCatalogLink = async (scope = "todos") => {
+    const url = getCatalogPageUrl(scope);
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Enlace copiado. Enviálo por WhatsApp a tus clientes.");
+    } catch {
+      toast.info(url, { autoClose: 12000 });
+    }
+  };
+
   const catalogHandler = async (
     scope = "todos",
     format = "html",
@@ -185,7 +206,9 @@ export default function Home({ products }) {
             ).generateCatalogPdf(available)
           : await (
               await import("@/utils/generateCatalogHtml")
-            ).generateCatalogHtml(available);
+            ).generateCatalogHtml(available, {
+              catalogUrl: getCatalogPageUrl(scope),
+            });
 
       if (output === "open") {
         openCatalogInNewTab(blobUrl, previewWindow);
@@ -240,7 +263,7 @@ export default function Home({ products }) {
             className="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2 px-4 transition-all duration-200 shadow-sm hover:shadow-md"
             onClick={() => handleReturn()}
           >
-            ‹ Regresar
+‹ Regresar
           </button>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4 mt-12">
             {products
@@ -266,9 +289,9 @@ export default function Home({ products }) {
               Generar catálogo
             </h3>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-              Para pedidos por WhatsApp usá el catálogo HTML (cantidades
-              editables y copiar pedido). El PDF es solo para consulta o
-              imprimir.
+              En iPhone, el archivo HTML adjunto no ejecuta botones. Enviá el{" "}
+              <strong>enlace del catálogo</strong> por WhatsApp (recomendado).
+              El PDF es solo para consulta.
             </p>
             <div className="mt-4 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
               <div className="grid grid-cols-2 gap-1">
@@ -298,30 +321,45 @@ export default function Home({ products }) {
             </div>
 
             <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Catálogo para pedidos (HTML)
+              Catálogo para pedidos (enlace)
+            </p>
+            <div className="mt-2 grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                className="rounded-lg bg-[#128c7e] py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                onClick={() => {
+                  setShowCatalogOptions(false);
+                  openCatalogPage(catalogScope);
+                }}
+              >
+                Abrir catálogo para pedidos
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-gray-900 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900"
+                onClick={() => {
+                  setShowCatalogOptions(false);
+                  copyCatalogLink(catalogScope);
+                }}
+              >
+                Copiar enlace para WhatsApp
+              </button>
+            </div>
+
+            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Archivo HTML (no usar en iPhone)
             </p>
             <div className="mt-2 grid grid-cols-1 gap-2">
               <button
                 type="button"
                 disabled={catalogLoading}
-                className="rounded-lg bg-gray-900 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
-                onClick={() => {
-                  setShowCatalogOptions(false);
-                  catalogHandler(catalogScope, "html", "open");
-                }}
-              >
-                Abrir catálogo interactivo
-              </button>
-              <button
-                type="button"
-                disabled={catalogLoading}
-                className="rounded-lg bg-gray-200 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+                className="rounded-lg border border-amber-300 bg-amber-50 py-2 text-sm font-medium text-amber-950 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-100"
                 onClick={() => {
                   setShowCatalogOptions(false);
                   catalogHandler(catalogScope, "html", "download");
                 }}
               >
-                Descargar HTML (WhatsApp)
+                Descargar HTML (solo Android/PC)
               </button>
             </div>
 

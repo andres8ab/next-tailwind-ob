@@ -15,7 +15,12 @@ const TITLE = "CATÁLOGO DE PRODUCTOS";
  * Self-contained HTML file: qty inputs + copy order. Works offline on any phone browser.
  * @param {Array<object>} products
  */
-export async function generateCatalogHtml(products) {
+/**
+ * @param {Array<object>} products
+ * @param {{ catalogUrl?: string }} options
+ */
+export async function generateCatalogHtml(products, options = {}) {
+  const catalogUrl = options.catalogUrl || "";
   const inStock = products
     .filter((p) => p.countInStock > 0)
     .sort((a, b) => {
@@ -184,22 +189,59 @@ export async function generateCatalogHtml(products) {
       color: #065f46;
     }
     .ios-wa-hint.visible { display: block; }
+    .file-preview-warn {
+      margin: 12px 16px 0;
+      padding: 14px;
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #78350f;
+    }
+    .file-preview-warn a {
+      color: #b45309;
+      font-weight: 700;
+      word-break: break-all;
+    }
     .bar .btn-whatsapp {
-      display: none;
+      display: block;
       width: 100%;
       padding: 14px;
       font-size: 1rem;
       font-weight: 700;
-      color: #fff;
+      color: #fff !important;
       background: #128c7e;
       border: none;
       border-radius: 10px;
       cursor: pointer;
       margin-bottom: 8px;
+      text-align: center;
+      text-decoration: none;
+      line-height: 1.25;
       -webkit-tap-highlight-color: transparent;
     }
-    .bar .btn-whatsapp.visible { display: block; }
     .bar .btn-whatsapp:active { opacity: 0.92; }
+    .bar .btn-select-text {
+      display: none;
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #18181b;
+      background: #fff;
+      border: 2px solid #128c7e;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .bar .btn-select-text.visible { display: block; }
+    .manual-copy.visible .hint { color: #065f46; font-weight: 600; }
+    #order-preview:focus {
+      outline: 2px solid #128c7e;
+      border-color: #128c7e;
+      background: #fff;
+    }
     .bar {
       position: fixed;
       left: 0; right: 0; bottom: 0;
@@ -207,7 +249,11 @@ export async function generateCatalogHtml(products) {
       background: #fff;
       border-top: 1px solid #e4e4e7;
       box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-      z-index: 10;
+      z-index: 100;
+    }
+    .bar button {
+      position: relative;
+      z-index: 101;
     }
     .bar .btn-primary {
       width: 100%;
@@ -261,7 +307,7 @@ export async function generateCatalogHtml(products) {
     }
     .toast.ok { display: block; background: #dcfce7; color: #166534; }
     .toast.err { display: block; background: #fee2e2; color: #991b1b; }
-    .manual-copy { display: none; margin-top: 8px; }
+    .manual-copy { display: none; margin-top: 8px; max-height: 38vh; overflow-y: auto; }
     .manual-copy.visible { display: block; }
     .manual-copy .hint {
       margin: 0 0 6px;
@@ -285,6 +331,17 @@ export async function generateCatalogHtml(products) {
   </style>
 </head>
 <body>
+  ${
+    catalogUrl
+      ? `<div class="file-preview-warn">
+    <p><strong>⚠️ iPhone / vista previa de archivo</strong></p>
+    <p>En WhatsApp los botones de este archivo <strong>no funcionan</strong> (iOS bloquea JavaScript).</p>
+    <p>Abrí el catálogo en el navegador (Safari o Chrome):</p>
+    <p><a href="${escapeHtml(catalogUrl)}">${escapeHtml(catalogUrl)}</a></p>
+    <p>Mantené pulsado el enlace → <strong>Abrir en Safari</strong></p>
+  </div>`
+      : ""
+  }
   <header class="header">
     ${logoSrc ? `<img class="logo" src="${logoSrc}" alt="OB" />` : ""}
     <h1>${escapeHtml(TITLE)}</h1>
@@ -295,9 +352,9 @@ export async function generateCatalogHtml(products) {
     <strong>Copiar pedido</strong> y pegá el texto en WhatsApp.
   </p>
   <p class="ios-wa-hint" id="ios-wa-hint">
-    <strong>iPhone en WhatsApp:</strong> el portapapeles no está disponible aquí. Usá
-    <strong>Enviar pedido en WhatsApp</strong> (abre el mensaje listo) o mantené pulsado
-    el texto del pedido y elegí <strong>Copiar</strong>.
+    <strong>iPhone / WhatsApp:</strong> tocá <strong>Compartir pedido</strong> y elegí
+  <strong>WhatsApp</strong> o <strong>Copiar</strong>. Si no aparece, mantené pulsado
+  el texto del pedido (abajo) y elegí <strong>Copiar</strong>.
   </p>
   <div class="table-wrap">
     <table>
@@ -324,26 +381,27 @@ export async function generateCatalogHtml(products) {
   </div>
   <div class="bar">
     <textarea id="copy-helper" aria-hidden="true" tabindex="-1"></textarea>
-    <button type="button" class="btn-whatsapp" id="wa-btn">Enviar pedido en WhatsApp</button>
-    <button type="button" class="btn-primary" id="copy-btn">Copiar pedido para WhatsApp</button>
-    <button type="button" class="btn-secondary" id="share-btn">Compartir pedido</button>
+    <button type="button" class="btn-whatsapp" id="share-wa-btn" onclick="window.OBCatalog.shareOrder(event)">Compartir pedido en WhatsApp</button>
+    <button type="button" class="btn-primary" id="copy-btn" onclick="window.OBCatalog.copyOrder(event)">Copiar pedido para WhatsApp</button>
+    <button type="button" class="btn-select-text" id="select-text-btn" onclick="window.OBCatalog.showOrderText(event)">Seleccionar texto del pedido</button>
     <p id="toast" class="toast" role="status"></p>
     <div id="manual-copy" class="manual-copy">
-      <p class="hint">Mantené pulsado el texto y elegí <strong>Copiar</strong>:</p>
-      <textarea id="order-preview" aria-label="Texto del pedido"></textarea>
+      <p class="hint" id="manual-hint">Mantené pulsado el texto y elegí <strong>Copiar</strong>:</p>
+      <textarea id="order-preview" aria-label="Texto del pedido" rows="5"></textarea>
     </div>
   </div>
   <script>
-    (function() {
+    window.OBCatalog = window.OBCatalog || {};
+    (function(OB) {
       var SUCCESS_MSG = "Pedido copiado. Pegalo en WhatsApp.";
       var helper = document.getElementById("copy-helper");
       var preview = document.getElementById("order-preview");
       var manualBox = document.getElementById("manual-copy");
-      var shareBtn = document.getElementById("share-btn");
-      var waBtn = document.getElementById("wa-btn");
+      var shareWaBtn = document.getElementById("share-wa-btn");
       var copyBtn = document.getElementById("copy-btn");
       var iosHint = document.getElementById("ios-wa-hint");
       var helpText = document.getElementById("help-text");
+      var manualHint = document.getElementById("manual-hint");
 
       function buildOrderText() {
         var lines = ["PEDIDO OB"];
@@ -376,11 +434,31 @@ export async function generateCatalogHtml(products) {
       function showManual(text) {
         preview.value = text;
         manualBox.classList.add("visible");
+        selectPreviewText();
+      }
+
+      function selectPreviewText() {
         try {
-          preview.focus({ preventScroll: true });
+          preview.focus();
           preview.select();
-          preview.setSelectionRange(0, text.length);
-        } catch (e) {}
+          preview.setSelectionRange(0, preview.value.length);
+        } catch (e) {
+          try { preview.select(); } catch (e2) {}
+        }
+      }
+
+      function scrollToOrderText() {
+        try {
+          manualBox.scrollIntoView({ behavior: "smooth", block: "end" });
+        } catch (e) {
+          try { preview.scrollIntoView(false); } catch (e2) {}
+        }
+      }
+
+      function presentOrderText(text, toastMsg, ok) {
+        showManual(text);
+        scrollToOrderText();
+        showToast(toastMsg, ok !== false);
       }
 
       function onCopySuccess(msg) {
@@ -389,49 +467,125 @@ export async function generateCatalogHtml(products) {
       }
 
       function isIOS() {
-        return /iPhone|iPad|iPod/i.test(navigator.userAgent || "");
-      }
-
-      function isRestrictedWebView() {
         var ua = navigator.userAgent || "";
-        if (/WhatsApp|Instagram|FBAN|FBAV|Line\\//i.test(ua)) return true;
-        if (isIOS() && /AppleWebKit/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua)) {
-          return !/Safari/i.test(ua);
+        if (/iPhone|iPad|iPod/i.test(ua)) return true;
+        return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+      }
+
+      function isInsideWhatsApp() {
+        return /WhatsApp/i.test(navigator.userAgent || "");
+      }
+
+      function isLimitedCopyEnv() {
+        return isIOS() || isInsideWhatsApp();
+      }
+
+      function setupPlatformUi() {
+        if (isLimitedCopyEnv()) {
+          iosHint.classList.add("visible");
+          selectTextBtn.classList.add("visible");
+          shareWaBtn.style.display = "block";
+          copyBtn.textContent = "Intentar copiar pedido";
+          if (!navigator.share) {
+            shareWaBtn.textContent = "Mostrar pedido para copiar";
+          }
+          if (helpText) {
+            helpText.innerHTML =
+              "<strong>Cómo pedir:</strong> cantidad en <strong>Cant.</strong>, luego " +
+              "<strong>Compartir pedido</strong> o copiá el texto de abajo.";
+          }
+          if (manualHint) {
+            manualHint.innerHTML =
+              "Mantené pulsado sobre el texto y elegí <strong>Copiar</strong>:";
+          }
+        } else {
+          shareWaBtn.style.display = "none";
         }
+      }
+      setupPlatformUi();
+
+      function tryNativeShare(text) {
+        if (typeof navigator.share !== "function") return null;
+        try {
+          var p = navigator.share({ title: "Pedido OB", text: text });
+          if (p && typeof p.then === "function") {
+            p.then(function() {
+              showToast("Elegí WhatsApp o Copiar en el menú.", true);
+            }).catch(function(err) {
+              if (err && err.name === "AbortError") return;
+              presentOrderText(
+                text,
+                "Mantené pulsado el texto → Copiar.",
+                false
+              );
+            });
+          } else {
+            showToast("Elegí WhatsApp o Copiar en el menú.", true);
+          }
+          return p;
+        } catch (err) {
+          if (err && err.name === "AbortError") return null;
+          return null;
+        }
+      }
+
+      OB.getOrderText = function() {
+        return buildOrderText();
+      };
+
+      OB.shareOrder = function(ev) {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        var text = buildOrderText();
+        if (orderLineCount(text) < 1) {
+          showToast("Ingresá al menos una cantidad.", false);
+          hideManual();
+          return false;
+        }
+        presentOrderText(
+          text,
+          "Si aparece Compartir, elegí WhatsApp. Si no, mantené pulsado el texto → Copiar.",
+          true
+        );
+        tryNativeShare(text);
         return false;
-      }
+      };
 
-      function isIosInAppBrowser() {
-        return isIOS() && isRestrictedWebView();
-      }
-
-      /** iOS in-app browsers block clipboard; WhatsApp URL opens composer with text. */
-      function sendViaWhatsAppLink(text) {
-        var encoded = encodeURIComponent(text);
-        var url = isIOS()
-          ? "whatsapp://send?text=" + encoded
-          : "https://api.whatsapp.com/send?text=" + encoded;
-        var link = document.createElement("a");
-        link.href = url;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        return true;
-      }
-
-      function setupIosWhatsAppUi() {
-        if (!isIosInAppBrowser()) return;
-        waBtn.classList.add("visible");
-        iosHint.classList.add("visible");
-        copyBtn.textContent = "Copiar pedido (si no funciona, usá Enviar arriba)";
-        if (helpText) {
-          helpText.innerHTML =
-            "<strong>Cómo pedir:</strong> cantidad en <strong>Cant.</strong>, luego " +
-            "<strong>Enviar pedido en WhatsApp</strong> (recomendado en iPhone).";
+      OB.showOrderText = function(ev) {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        var text = buildOrderText();
+        if (orderLineCount(text) < 1) {
+          showToast("Ingresá al menos una cantidad.", false);
+          return false;
         }
-      }
-      setupIosWhatsAppUi();
+        presentOrderText(
+          text,
+          "Mantené pulsado el texto → Copiar.",
+          false
+        );
+        return false;
+      };
+
+      OB.copyOrder = function(ev) {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        var text = buildOrderText();
+        if (orderLineCount(text) < 1) {
+          showToast("Ingresá al menos una cantidad.", false);
+          hideManual();
+          return false;
+        }
+        if (isLimitedCopyEnv()) {
+          showManual(text);
+          scrollToOrderText();
+          if (copySync(text)) {
+            onCopySuccess();
+          } else {
+            showToast("Mantené pulsado el texto → Copiar.", false);
+          }
+          return false;
+        }
+        runCopyFlow(text);
+        return false;
+      };
 
       /** Sync copy — must run in the same tap/click handler (mobile WebViews). */
       function copySync(text) {
@@ -470,24 +624,13 @@ export async function generateCatalogHtml(products) {
         return navigator.clipboard.writeText(text);
       }
 
-      function shareViaNative(text) {
-        if (!navigator.share) {
-          return Promise.reject(new Error("share unavailable"));
-        }
-        return navigator.share({ title: "Pedido OB", text: text });
-      }
-
       function runCopyFlow(text) {
         function tryClipboardThenManual() {
           copyViaClipboardApi(text)
             .then(function() { onCopySuccess(); })
             .catch(function() {
               showManual(text);
-              if (isIosInAppBrowser()) {
-                showToast("Mantené pulsado el texto de abajo → Copiar.", false);
-              } else {
-                showToast("Mantené pulsado el texto y elegí Copiar.", false);
-              }
+              showToast("Mantené pulsado el texto y elegí Copiar.", false);
             });
         }
 
@@ -499,99 +642,12 @@ export async function generateCatalogHtml(products) {
           tryClipboardThenManual();
         }
 
-        if (isIosInAppBrowser()) {
-          showManual(text);
-          trySyncThenClipboard();
-          return;
-        }
-
-        if (navigator.share && isRestrictedWebView()) {
-          shareViaNative(text)
-            .then(function() {
-              onCopySuccess("Pedido listo. Elegí WhatsApp en compartir.");
-            })
-            .catch(function() {
-              trySyncThenClipboard();
-            });
-          return;
-        }
-
         trySyncThenClipboard();
       }
 
-      if (navigator.share && !isIosInAppBrowser()) {
-        shareBtn.classList.add("visible");
-      }
-
-      waBtn.addEventListener("click", function() {
-        var text = buildOrderText();
-        if (orderLineCount(text) < 1) {
-          showToast("Ingresá al menos una cantidad.", false);
-          return;
-        }
-        showManual(text);
-        if (sendViaWhatsAppLink(text)) {
-          showToast("Elegí el chat de WhatsApp para enviar el pedido.", true);
-        } else {
-          showToast("No se pudo abrir WhatsApp. Copiá el texto de abajo.", false);
-        }
-      }, false);
-
-      copyBtn.addEventListener("click", function() {
-        var text = buildOrderText();
-        if (orderLineCount(text) < 1) {
-          showToast("Ingresá al menos una cantidad.", false);
-          hideManual();
-          return;
-        }
-        runCopyFlow(text);
-      }, false);
-
-      shareBtn.addEventListener("click", function() {
-        var text = buildOrderText();
-        if (orderLineCount(text) < 1) {
-          showToast("Ingresá al menos una cantidad.", false);
-          return;
-        }
-        shareViaNative(text)
-          .then(function() {
-            onCopySuccess("Pedido listo. Elegí WhatsApp en compartir.");
-          })
-          .catch(function() {
-            runCopyFlow(text);
-          });
-      }, false);
-
-      preview.addEventListener("focus", function() {
-        try {
-          preview.select();
-          preview.setSelectionRange(0, preview.value.length);
-        } catch (e) {}
-      });
-
-      preview.addEventListener("click", function() {
-        var text = preview.value;
-        if (!text) return;
-        if (isIosInAppBrowser()) {
-          try {
-            preview.focus();
-            preview.select();
-            preview.setSelectionRange(0, text.length);
-          } catch (e) {}
-          showToast("Mantené pulsado → Copiar", false);
-          return;
-        }
-        if (copySync(text)) {
-          onCopySuccess();
-        } else {
-          try {
-            preview.focus();
-            preview.select();
-            preview.setSelectionRange(0, text.length);
-          } catch (e) {}
-        }
-      });
-    })();
+      preview.addEventListener("focus", selectPreviewText);
+      preview.addEventListener("click", selectPreviewText);
+    })(window.OBCatalog);
   </script>
 </body>
 </html>`;
