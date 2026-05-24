@@ -105,7 +105,7 @@ export async function generateCatalogHtml(products) {
       font-size: 14px;
       color: #111;
       background: #f4f4f5;
-      padding-bottom: calc(88px + env(safe-area-inset-bottom));
+      padding-bottom: calc(120px + env(safe-area-inset-bottom));
     }
     .header {
       background: #fff;
@@ -136,13 +136,21 @@ export async function generateCatalogHtml(products) {
     }
     th, td { border: 1px solid #111; padding: 8px 6px; text-align: center; vertical-align: middle; }
     th { background: #f5f5f5; font-size: 0.8rem; }
+    th.col-ref, td.ref {
+      width: 48px;
+      max-width: 48px;
+      min-width: 44px;
+      padding: 6px 3px;
+      font-size: 0.7rem;
+      line-height: 1.2;
+    }
     tr.category-row td {
       background: #111;
       color: #fff;
       font-weight: 700;
       font-size: 0.85rem;
     }
-    td.ref { font-weight: 700; white-space: nowrap; }
+    td.ref { font-weight: 700; white-space: nowrap; word-break: break-all; }
     td.desc { text-align: left; font-size: 0.8rem; max-width: 140px; }
     td.img img { max-width: 72px; max-height: 52px; object-fit: contain; display: block; margin: 0 auto; }
     td.price { font-weight: 700; white-space: nowrap; font-size: 0.85rem; }
@@ -164,7 +172,7 @@ export async function generateCatalogHtml(products) {
       box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
       z-index: 10;
     }
-    .bar button {
+    .bar .btn-primary {
       width: 100%;
       padding: 14px;
       font-size: 1rem;
@@ -174,8 +182,37 @@ export async function generateCatalogHtml(products) {
       border: none;
       border-radius: 10px;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
-    .bar button:active { opacity: 0.9; }
+    .bar .btn-primary:active { opacity: 0.9; }
+    .bar .btn-secondary {
+      display: none;
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #18181b;
+      background: #f4f4f5;
+      border: 1px solid #d4d4d8;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .bar .btn-secondary.visible { display: block; }
+    #copy-helper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: 0;
+      border: 0;
+      opacity: 0.01;
+      font-size: 16px;
+      z-index: 1;
+      pointer-events: none;
+    }
     .toast {
       display: none;
       margin-top: 8px;
@@ -183,19 +220,30 @@ export async function generateCatalogHtml(products) {
       border-radius: 8px;
       font-size: 0.85rem;
       text-align: center;
+      line-height: 1.35;
     }
     .toast.ok { display: block; background: #dcfce7; color: #166534; }
     .toast.err { display: block; background: #fee2e2; color: #991b1b; }
+    .manual-copy { display: none; margin-top: 8px; }
+    .manual-copy.visible { display: block; }
+    .manual-copy .hint {
+      margin: 0 0 6px;
+      font-size: 0.8rem;
+      color: #52525b;
+    }
     #order-preview {
-      display: none;
-      margin-top: 8px;
       width: 100%;
-      min-height: 80px;
-      font-family: monospace;
-      font-size: 12px;
-      padding: 8px;
+      min-height: 72px;
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      line-height: 1.4;
+      padding: 10px;
       border-radius: 8px;
       border: 1px solid #d4d4d8;
+      background: #fafafa;
+      resize: none;
+      -webkit-user-select: all;
+      user-select: all;
     }
   </style>
 </head>
@@ -213,7 +261,7 @@ export async function generateCatalogHtml(products) {
     <table>
       <thead>
         <tr>
-          <th>Ref.</th>
+          <th class="col-ref">Ref.</th>
           <th>Descripción</th>
           <th>Imagen</th>
           <th>Precio</th>
@@ -226,64 +274,195 @@ export async function generateCatalogHtml(products) {
     </table>
   </div>
   <div class="bar">
-    <button type="button" id="copy-btn">Copiar pedido para WhatsApp</button>
+    <textarea id="copy-helper" aria-hidden="true" tabindex="-1"></textarea>
+    <button type="button" class="btn-primary" id="copy-btn">Copiar pedido para WhatsApp</button>
+    <button type="button" class="btn-secondary" id="share-btn">Compartir pedido</button>
     <p id="toast" class="toast" role="status"></p>
-    <textarea id="order-preview" readonly aria-label="Vista del pedido"></textarea>
+    <div id="manual-copy" class="manual-copy">
+      <p class="hint">Mantené pulsado el texto y elegí <strong>Copiar</strong>:</p>
+      <textarea id="order-preview" aria-label="Texto del pedido"></textarea>
+    </div>
   </div>
   <script>
-    function buildOrderText() {
-      var lines = ["PEDIDO OB"];
-      document.querySelectorAll("tr[data-ref]").forEach(function(row) {
-        var input = row.querySelector(".qty-input");
-        var qty = parseInt(input && input.value, 10);
-        if (qty > 0) lines.push(row.getAttribute("data-ref") + " x" + qty);
-      });
-      return lines.join("\\n");
-    }
-    function showToast(msg, ok) {
-      var el = document.getElementById("toast");
-      el.textContent = msg;
-      el.className = "toast " + (ok ? "ok" : "err");
-    }
-    document.getElementById("copy-btn").addEventListener("click", function() {
-      var text = buildOrderText();
-      var count = text.split("\\n").length - 1;
-      if (count < 1) {
-        showToast("Ingresá al menos una cantidad.", false);
-        return;
-      }
+    (function() {
+      var SUCCESS_MSG = "Pedido copiado. Pegalo en WhatsApp.";
+      var helper = document.getElementById("copy-helper");
       var preview = document.getElementById("order-preview");
-      function onSuccess() {
-        showToast("Pedido copiado. Pegalo en WhatsApp.", true);
-        preview.style.display = "none";
+      var manualBox = document.getElementById("manual-copy");
+      var shareBtn = document.getElementById("share-btn");
+
+      function buildOrderText() {
+        var lines = ["PEDIDO OB"];
+        document.querySelectorAll("tr[data-ref]").forEach(function(row) {
+          var input = row.querySelector(".qty-input");
+          var qty = parseInt(input && input.value, 10);
+          if (qty > 0) lines.push(row.getAttribute("data-ref") + " x" + qty);
+        });
+        return lines.join("\\n");
       }
-      function showManual() {
+
+      function orderLineCount(text) {
+        var n = 0;
+        text.split("\\n").forEach(function(line) {
+          if (line && line.indexOf("PEDIDO") !== 0) n++;
+        });
+        return n;
+      }
+
+      function showToast(msg, ok) {
+        var el = document.getElementById("toast");
+        el.textContent = msg;
+        el.className = "toast " + (ok ? "ok" : "err");
+      }
+
+      function hideManual() {
+        manualBox.classList.remove("visible");
+      }
+
+      function showManual(text) {
         preview.value = text;
-        preview.style.display = "block";
-        preview.focus();
-        preview.select();
-        showToast("Seleccioná el texto y copiá (mantener pulsado).", false);
-      }
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(onSuccess).catch(showManual);
-      } else {
+        manualBox.classList.add("visible");
         try {
-          var ta = document.createElement("textarea");
-          ta.value = text;
-          ta.setAttribute("readonly", "");
-          ta.style.position = "fixed";
-          ta.style.left = "-9999px";
-          document.body.appendChild(ta);
-          ta.select();
-          var ok = document.execCommand("copy");
-          document.body.removeChild(ta);
-          if (ok) onSuccess();
-          else showManual();
-        } catch (e) {
-          showManual();
-        }
+          preview.focus({ preventScroll: true });
+          preview.select();
+          preview.setSelectionRange(0, text.length);
+        } catch (e) {}
       }
-    });
+
+      function onCopySuccess(msg) {
+        showToast(msg || SUCCESS_MSG, true);
+        hideManual();
+      }
+
+      function isRestrictedWebView() {
+        var ua = navigator.userAgent || "";
+        if (/WhatsApp|Instagram|FBAN|FBAV|Line\\//i.test(ua)) return true;
+        var iOS = /iPhone|iPad|iPod/i.test(ua);
+        if (iOS && /AppleWebKit/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua)) {
+          return !/Safari/i.test(ua);
+        }
+        return false;
+      }
+
+      /** Sync copy — must run in the same tap/click handler (mobile WebViews). */
+      function copySync(text) {
+        helper.value = text;
+        helper.removeAttribute("readonly");
+        helper.style.display = "block";
+        helper.style.pointerEvents = "auto";
+        var ok = false;
+        try {
+          helper.focus({ preventScroll: true });
+          helper.select();
+          helper.setSelectionRange(0, text.length);
+          ok = document.execCommand("copy");
+        } catch (e) {}
+        if (!ok) {
+          try {
+            var range = document.createRange();
+            range.selectNodeContents(helper);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            ok = document.execCommand("copy");
+            sel.removeAllRanges();
+          } catch (e2) {}
+        }
+        helper.style.display = "";
+        helper.style.pointerEvents = "none";
+        helper.setAttribute("readonly", "readonly");
+        return ok;
+      }
+
+      function copyViaClipboardApi(text) {
+        if (!navigator.clipboard || !navigator.clipboard.writeText) {
+          return Promise.reject(new Error("clipboard unavailable"));
+        }
+        return navigator.clipboard.writeText(text);
+      }
+
+      function shareViaNative(text) {
+        if (!navigator.share) {
+          return Promise.reject(new Error("share unavailable"));
+        }
+        return navigator.share({ title: "Pedido OB", text: text });
+      }
+
+      function runCopyFlow(text) {
+        function tryClipboardThenManual() {
+          copyViaClipboardApi(text)
+            .then(function() { onCopySuccess(); })
+            .catch(function() {
+              showManual(text);
+              showToast("Mantené pulsado el texto y elegí Copiar.", false);
+            });
+        }
+
+        function trySyncThenClipboard() {
+          if (copySync(text)) {
+            onCopySuccess();
+            return;
+          }
+          tryClipboardThenManual();
+        }
+
+        if (navigator.share && isRestrictedWebView()) {
+          shareViaNative(text)
+            .then(function() {
+              onCopySuccess("Pedido listo. Elegí WhatsApp en compartir.");
+            })
+            .catch(function() {
+              trySyncThenClipboard();
+            });
+          return;
+        }
+
+        trySyncThenClipboard();
+      }
+
+      if (navigator.share) {
+        shareBtn.classList.add("visible");
+      }
+
+      document.getElementById("copy-btn").addEventListener("click", function() {
+        var text = buildOrderText();
+        if (orderLineCount(text) < 1) {
+          showToast("Ingresá al menos una cantidad.", false);
+          hideManual();
+          return;
+        }
+        runCopyFlow(text);
+      }, false);
+
+      shareBtn.addEventListener("click", function() {
+        var text = buildOrderText();
+        if (orderLineCount(text) < 1) {
+          showToast("Ingresá al menos una cantidad.", false);
+          return;
+        }
+        shareViaNative(text)
+          .then(function() {
+            onCopySuccess("Pedido listo. Elegí WhatsApp en compartir.");
+          })
+          .catch(function() {
+            runCopyFlow(text);
+          });
+      }, false);
+
+      preview.addEventListener("click", function() {
+        var text = preview.value;
+        if (!text) return;
+        if (copySync(text)) {
+          onCopySuccess();
+        } else {
+          try {
+            preview.focus();
+            preview.select();
+            preview.setSelectionRange(0, text.length);
+          } catch (e) {}
+        }
+      });
+    })();
   </script>
 </body>
 </html>`;
