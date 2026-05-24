@@ -126,43 +126,80 @@ export async function generateCatalogHtml(products) {
       line-height: 1.45;
       color: #3f3f46;
     }
-    .table-wrap { margin: 12px 8px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-wrap { margin: 12px 6px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table {
       width: 100%;
-      min-width: 520px;
+      table-layout: fixed;
       border-collapse: collapse;
       background: #fff;
       border: 1px solid #111;
     }
-    th, td { border: 1px solid #111; padding: 8px 6px; text-align: center; vertical-align: middle; }
-    th { background: #f5f5f5; font-size: 0.8rem; }
+    col.col-ref { width: 13%; }
+    col.col-desc { width: 26%; }
+    col.col-img { width: 22%; }
+    col.col-price { width: 19%; }
+    col.col-qty { width: 20%; }
+    th, td { border: 1px solid #111; padding: 7px 5px; text-align: center; vertical-align: middle; }
+    th { background: #f5f5f5; font-size: 0.75rem; }
     th.col-ref, td.ref {
-      width: 48px;
-      max-width: 48px;
-      min-width: 44px;
-      padding: 6px 3px;
-      font-size: 0.7rem;
-      line-height: 1.2;
+      padding: 7px 5px;
+      font-size: 0.72rem;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
     }
     tr.category-row td {
       background: #111;
       color: #fff;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
-    td.ref { font-weight: 700; white-space: nowrap; word-break: break-all; }
-    td.desc { text-align: left; font-size: 0.8rem; max-width: 140px; }
-    td.img img { max-width: 72px; max-height: 52px; object-fit: contain; display: block; margin: 0 auto; }
-    td.price { font-weight: 700; white-space: nowrap; font-size: 0.85rem; }
+    td.ref { font-weight: 700; white-space: normal; word-break: break-word; }
+    td.desc {
+      text-align: left;
+      font-size: 0.72rem;
+      line-height: 1.25;
+      overflow: hidden;
+      word-break: break-word;
+    }
+    td.img img { max-width: 100%; max-height: 46px; object-fit: contain; display: block; margin: 0 auto; }
+    td.price { font-weight: 700; white-space: normal; font-size: 0.72rem; line-height: 1.2; word-break: break-word; }
     .qty-input {
-      width: 56px;
-      max-width: 100%;
-      padding: 8px 4px;
+      width: 100%;
+      max-width: 52px;
+      padding: 7px 3px;
       font-size: 16px;
       text-align: center;
       border: 1px solid #a1a1aa;
       border-radius: 6px;
     }
+    .ios-wa-hint {
+      display: none;
+      margin: 12px 16px 0;
+      padding: 12px;
+      background: #ecfdf5;
+      border: 1px solid #6ee7b7;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      line-height: 1.45;
+      color: #065f46;
+    }
+    .ios-wa-hint.visible { display: block; }
+    .bar .btn-whatsapp {
+      display: none;
+      width: 100%;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: #128c7e;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bar .btn-whatsapp.visible { display: block; }
+    .bar .btn-whatsapp:active { opacity: 0.92; }
     .bar {
       position: fixed;
       left: 0; right: 0; bottom: 0;
@@ -253,12 +290,24 @@ export async function generateCatalogHtml(products) {
     <h1>${escapeHtml(TITLE)}</h1>
     <p class="date">${escapeHtml(dateLabel)}</p>
   </header>
-  <p class="help">
+  <p class="help" id="help-text">
     <strong>Cómo pedir:</strong> escribí la cantidad en <strong>Cant.</strong>, tocá
     <strong>Copiar pedido</strong> y pegá el texto en WhatsApp.
   </p>
+  <p class="ios-wa-hint" id="ios-wa-hint">
+    <strong>iPhone en WhatsApp:</strong> el portapapeles no está disponible aquí. Usá
+    <strong>Enviar pedido en WhatsApp</strong> (abre el mensaje listo) o mantené pulsado
+    el texto del pedido y elegí <strong>Copiar</strong>.
+  </p>
   <div class="table-wrap">
     <table>
+      <colgroup>
+        <col class="col-ref" />
+        <col class="col-desc" />
+        <col class="col-img" />
+        <col class="col-price" />
+        <col class="col-qty" />
+      </colgroup>
       <thead>
         <tr>
           <th class="col-ref">Ref.</th>
@@ -275,6 +324,7 @@ export async function generateCatalogHtml(products) {
   </div>
   <div class="bar">
     <textarea id="copy-helper" aria-hidden="true" tabindex="-1"></textarea>
+    <button type="button" class="btn-whatsapp" id="wa-btn">Enviar pedido en WhatsApp</button>
     <button type="button" class="btn-primary" id="copy-btn">Copiar pedido para WhatsApp</button>
     <button type="button" class="btn-secondary" id="share-btn">Compartir pedido</button>
     <p id="toast" class="toast" role="status"></p>
@@ -290,6 +340,10 @@ export async function generateCatalogHtml(products) {
       var preview = document.getElementById("order-preview");
       var manualBox = document.getElementById("manual-copy");
       var shareBtn = document.getElementById("share-btn");
+      var waBtn = document.getElementById("wa-btn");
+      var copyBtn = document.getElementById("copy-btn");
+      var iosHint = document.getElementById("ios-wa-hint");
+      var helpText = document.getElementById("help-text");
 
       function buildOrderText() {
         var lines = ["PEDIDO OB"];
@@ -334,15 +388,50 @@ export async function generateCatalogHtml(products) {
         hideManual();
       }
 
+      function isIOS() {
+        return /iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+      }
+
       function isRestrictedWebView() {
         var ua = navigator.userAgent || "";
         if (/WhatsApp|Instagram|FBAN|FBAV|Line\\//i.test(ua)) return true;
-        var iOS = /iPhone|iPad|iPod/i.test(ua);
-        if (iOS && /AppleWebKit/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua)) {
+        if (isIOS() && /AppleWebKit/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua)) {
           return !/Safari/i.test(ua);
         }
         return false;
       }
+
+      function isIosInAppBrowser() {
+        return isIOS() && isRestrictedWebView();
+      }
+
+      /** iOS in-app browsers block clipboard; WhatsApp URL opens composer with text. */
+      function sendViaWhatsAppLink(text) {
+        var encoded = encodeURIComponent(text);
+        var url = isIOS()
+          ? "whatsapp://send?text=" + encoded
+          : "https://api.whatsapp.com/send?text=" + encoded;
+        var link = document.createElement("a");
+        link.href = url;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return true;
+      }
+
+      function setupIosWhatsAppUi() {
+        if (!isIosInAppBrowser()) return;
+        waBtn.classList.add("visible");
+        iosHint.classList.add("visible");
+        copyBtn.textContent = "Copiar pedido (si no funciona, usá Enviar arriba)";
+        if (helpText) {
+          helpText.innerHTML =
+            "<strong>Cómo pedir:</strong> cantidad en <strong>Cant.</strong>, luego " +
+            "<strong>Enviar pedido en WhatsApp</strong> (recomendado en iPhone).";
+        }
+      }
+      setupIosWhatsAppUi();
 
       /** Sync copy — must run in the same tap/click handler (mobile WebViews). */
       function copySync(text) {
@@ -394,7 +483,11 @@ export async function generateCatalogHtml(products) {
             .then(function() { onCopySuccess(); })
             .catch(function() {
               showManual(text);
-              showToast("Mantené pulsado el texto y elegí Copiar.", false);
+              if (isIosInAppBrowser()) {
+                showToast("Mantené pulsado el texto de abajo → Copiar.", false);
+              } else {
+                showToast("Mantené pulsado el texto y elegí Copiar.", false);
+              }
             });
         }
 
@@ -404,6 +497,12 @@ export async function generateCatalogHtml(products) {
             return;
           }
           tryClipboardThenManual();
+        }
+
+        if (isIosInAppBrowser()) {
+          showManual(text);
+          trySyncThenClipboard();
+          return;
         }
 
         if (navigator.share && isRestrictedWebView()) {
@@ -420,11 +519,25 @@ export async function generateCatalogHtml(products) {
         trySyncThenClipboard();
       }
 
-      if (navigator.share) {
+      if (navigator.share && !isIosInAppBrowser()) {
         shareBtn.classList.add("visible");
       }
 
-      document.getElementById("copy-btn").addEventListener("click", function() {
+      waBtn.addEventListener("click", function() {
+        var text = buildOrderText();
+        if (orderLineCount(text) < 1) {
+          showToast("Ingresá al menos una cantidad.", false);
+          return;
+        }
+        showManual(text);
+        if (sendViaWhatsAppLink(text)) {
+          showToast("Elegí el chat de WhatsApp para enviar el pedido.", true);
+        } else {
+          showToast("No se pudo abrir WhatsApp. Copiá el texto de abajo.", false);
+        }
+      }, false);
+
+      copyBtn.addEventListener("click", function() {
         var text = buildOrderText();
         if (orderLineCount(text) < 1) {
           showToast("Ingresá al menos una cantidad.", false);
@@ -449,9 +562,25 @@ export async function generateCatalogHtml(products) {
           });
       }, false);
 
+      preview.addEventListener("focus", function() {
+        try {
+          preview.select();
+          preview.setSelectionRange(0, preview.value.length);
+        } catch (e) {}
+      });
+
       preview.addEventListener("click", function() {
         var text = preview.value;
         if (!text) return;
+        if (isIosInAppBrowser()) {
+          try {
+            preview.focus();
+            preview.select();
+            preview.setSelectionRange(0, text.length);
+          } catch (e) {}
+          showToast("Mantené pulsado → Copiar", false);
+          return;
+        }
         if (copySync(text)) {
           onCopySuccess();
         } else {
