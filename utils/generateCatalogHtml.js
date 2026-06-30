@@ -19,8 +19,7 @@ const TITLE = "CATÁLOGO DE PRODUCTOS";
  * @param {Array<object>} products
  * @param {{ catalogUrl?: string }} options
  */
-export async function generateCatalogHtml(products, options = {}) {
-  const catalogUrl = options.catalogUrl || "";
+export async function generateCatalogHtml(products) {
   const inStock = products
     .filter((p) => p.countInStock > 0)
     .sort((a, b) => {
@@ -189,21 +188,6 @@ export async function generateCatalogHtml(products, options = {}) {
       color: #065f46;
     }
     .ios-wa-hint.visible { display: block; }
-    .file-preview-warn {
-      margin: 12px 16px 0;
-      padding: 14px;
-      background: #fef3c7;
-      border: 2px solid #f59e0b;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      color: #78350f;
-    }
-    .file-preview-warn a {
-      color: #b45309;
-      font-weight: 700;
-      word-break: break-all;
-    }
     .bar .btn-whatsapp {
       display: block;
       width: 100%;
@@ -331,17 +315,6 @@ export async function generateCatalogHtml(products, options = {}) {
   </style>
 </head>
 <body>
-  ${
-    catalogUrl
-      ? `<div class="file-preview-warn">
-    <p><strong>⚠️ iPhone / vista previa de archivo</strong></p>
-    <p>En WhatsApp los botones de este archivo <strong>no funcionan</strong> (iOS bloquea JavaScript).</p>
-    <p>Abrí el catálogo en el navegador (Safari o Chrome):</p>
-    <p><a href="${escapeHtml(catalogUrl)}">${escapeHtml(catalogUrl)}</a></p>
-    <p>Mantené pulsado el enlace → <strong>Abrir en Safari</strong></p>
-  </div>`
-      : ""
-  }
   <header class="header">
     ${logoSrc ? `<img class="logo" src="${logoSrc}" alt="OB" />` : ""}
     <h1>${escapeHtml(TITLE)}</h1>
