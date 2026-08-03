@@ -5,6 +5,7 @@ import { Store } from "@/utils/Store";
 import db from "@/utils/db";
 import axios from "axios";
 import Image from "next/image";
+import Link from "next/link";
 import { useContext, useState } from "react";
 import { toast } from "react-toastify";
 import Tilt from "react-parallax-tilt";
@@ -12,7 +13,7 @@ import { motion } from "framer-motion";
 import { fadeIn } from "@/utils/motion";
 import SearchBar from "@/components/SearchBar";
 import { clearsStockFlag } from "@/utils/cartStock";
-import { DocumentArrowDownIcon } from "@heroicons/react/24/solid";
+import { BoltIcon, DocumentArrowDownIcon } from "@heroicons/react/24/solid";
 
 const productsDetails = [
   {
@@ -160,25 +161,10 @@ export default function Home({ products }) {
       (p) => p.countInStock > 0 && (scope === "ob" ? p.group === "ob" : true),
     );
 
-  const getCatalogPageUrl = (scope = "todos") => {
-    const path = `/catalogo-pedido?scope=${scope === "ob" ? "ob" : "todos"}`;
+  const getCatalogPageUrl = () => {
+    const path = "/catalogo-pedido";
     if (typeof window === "undefined") return path;
     return `${window.location.origin}${path}`;
-  };
-
-  const openCatalogPage = (scope = "todos") => {
-    window.open(getCatalogPageUrl(scope), "_blank", "noopener,noreferrer");
-    toast.success("Catálogo abierto en el navegador");
-  };
-
-  const copyCatalogLink = async (scope = "todos") => {
-    const url = getCatalogPageUrl(scope);
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Enlace copiado. Enviálo por WhatsApp a tus clientes.");
-    } catch {
-      toast.info(url, { autoClose: 12000 });
-    }
   };
 
   const catalogHandler = async (
@@ -207,7 +193,7 @@ export default function Home({ products }) {
           : await (
               await import("@/utils/generateCatalogHtml")
             ).generateCatalogHtml(available, {
-              catalogUrl: getCatalogPageUrl(scope),
+              catalogUrl: getCatalogPageUrl(),
             });
 
       if (output === "open") {
@@ -289,9 +275,10 @@ export default function Home({ products }) {
               Generar catálogo
             </h3>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-              En iPhone, el archivo HTML adjunto no ejecuta botones. Enviá el{" "}
-              <strong>enlace del catálogo</strong> por WhatsApp (recomendado).
-              El PDF es solo para consulta.
+              Elegí el grupo y el formato del archivo. En iPhone, el archivo
+              HTML adjunto no ejecuta botones: usá el PDF, que es solo para
+              consulta. Para armar un pedido, usá el botón{" "}
+              <strong>Pedido rápido</strong>.
             </p>
             <div className="mt-4 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
               <div className="grid grid-cols-2 gap-1">
@@ -318,32 +305,6 @@ export default function Home({ products }) {
                   Todos
                 </button>
               </div>
-            </div>
-
-            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Catálogo para pedidos (enlace)
-            </p>
-            <div className="mt-2 grid grid-cols-1 gap-2">
-              <button
-                type="button"
-                className="rounded-lg bg-[#128c7e] py-2.5 text-sm font-semibold text-white hover:opacity-90"
-                onClick={() => {
-                  setShowCatalogOptions(false);
-                  openCatalogPage(catalogScope);
-                }}
-              >
-                Abrir catálogo para pedidos
-              </button>
-              <button
-                type="button"
-                className="rounded-lg bg-gray-900 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900"
-                onClick={() => {
-                  setShowCatalogOptions(false);
-                  copyCatalogLink(catalogScope);
-                }}
-              >
-                Copiar enlace para WhatsApp
-              </button>
             </div>
 
             <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -400,24 +361,35 @@ export default function Home({ products }) {
           </div>
         </div>
       )}
-      <button
-        type="button"
-        onClick={() => {
-          setCatalogScope("todos");
-          setShowCatalogOptions(true);
-        }}
-        disabled={catalogLoading}
-        aria-busy={catalogLoading}
-        aria-label="Generar catálogo"
-        title="Generar catálogo"
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-5 py-3.5 text-sm font-semibold text-white shadow-lg ring-1 ring-white/10 transition hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:ring-black/5 dark:hover:bg-white dark:focus-visible:outline-gray-200"
-      >
-        <DocumentArrowDownIcon
-          className={`h-5 w-5 shrink-0 ${catalogLoading ? "animate-pulse" : ""}`}
-          aria-hidden
-        />
-        {catalogLoading ? "Generando…" : "Catálogo"}
-      </button>
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
+        <Link
+          href="/catalogo-pedido"
+          aria-label="Pedido rápido"
+          title="Armá un pedido y agregalo al carrito"
+          className="flex items-center gap-2 rounded-full bg-[#128c7e] px-5 py-3.5 text-sm font-semibold !text-white shadow-lg ring-1 ring-white/10 transition hover:opacity-90 hover:!text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#128c7e]"
+        >
+          <BoltIcon className="h-5 w-5 shrink-0" aria-hidden />
+          Pedido rápido
+        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            setCatalogScope("todos");
+            setShowCatalogOptions(true);
+          }}
+          disabled={catalogLoading}
+          aria-busy={catalogLoading}
+          aria-label="Generar catálogo"
+          title="Generar catálogo"
+          className="flex items-center gap-2 rounded-full bg-gray-900 px-5 py-3.5 text-sm font-semibold text-white shadow-lg ring-1 ring-white/10 transition hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:ring-black/5 dark:hover:bg-white dark:focus-visible:outline-gray-200"
+        >
+          <DocumentArrowDownIcon
+            className={`h-5 w-5 shrink-0 ${catalogLoading ? "animate-pulse" : ""}`}
+            aria-hidden
+          />
+          {catalogLoading ? "Generando…" : "Catálogo"}
+        </button>
+      </div>
     </Layout>
   );
 }

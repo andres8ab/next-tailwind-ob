@@ -1,31 +1,40 @@
+import axios from "axios";
 import Image from "next/image";
-import { Fragment, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
+import { Fragment, useContext, useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import { ShoppingCartIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { formatOrderMessageFromMap } from "@/utils/formatOrderMessage";
 import { getProductRef } from "@/utils/productRef";
+import { Store } from "@/utils/Store";
+import { getError } from "@/utils/error";
+import { showImportToasts } from "@/utils/importOrderToasts";
 import {
   formatCatalogPrice,
   splitCatalogName,
 } from "@/utils/catalogFormat";
 
-export default function CatalogPedidoScreen({ products, initialScope = "todos" }) {
-  const [scope] = useState(initialScope === "ob" ? "ob" : "todos");
+export default function CatalogPedidoScreen({ products }) {
+  const router = useRouter();
+  const { status } = useSession();
+  const { state, dispatch } = useContext(Store);
+  const { cartItems } = state.cart;
   const [quantities, setQuantities] = useState({});
-  const [orderPreview, setOrderPreview] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [addedCount, setAddedCount] = useState(0);
 
   const availableProducts = useMemo(
     () =>
       products
-        .filter(
-          (p) =>
-            p.countInStock > 0 && (scope === "ob" ? p.group === "ob" : true),
-        )
+        .filter((p) => p.countInStock > 0)
         .sort((a, b) => {
           const c = a.category.localeCompare(b.category, "es");
           if (c !== 0) return c;
           return a.name.localeCompare(b.name, "es");
         }),
-    [products, scope],
+    [products],
   );
 
   const byCategory = useMemo(() => {
@@ -40,7 +49,7 @@ export default function CatalogPedidoScreen({ products, initialScope = "todos" }
     );
   }, [availableProducts]);
 
-  const buildOrderText = () => formatOrderMessageFromMap(quantities);
+  const selectedCount = Object.values(quantities).filter((q) => q > 0).length;
 
   const setQty = (ref, value) => {
     const qty = Math.max(0, Number.parseInt(value, 10) || 0);
@@ -52,46 +61,50 @@ export default function CatalogPedidoScreen({ products, initialScope = "todos" }
     });
   };
 
-  const validateOrder = () => {
-    const text = buildOrderText();
-    const lineCount = Object.values(quantities).filter((q) => q > 0).length;
-    if (lineCount < 1) {
-      toast.error("Ingresá al menos una cantidad");
-      return null;
+  const addToCartHandler = async () => {
+    if (selectedCount < 1) {
+      return toast.error("Ingresá al menos una cantidad");
     }
-    return text;
-  };
 
-  const showOrderPreview = (text) => {
-    setOrderPreview(text);
-  };
+    // La sesión todavía se está resolviendo: no mandamos a login a un usuario
+    // que sí está logueado.
+    if (status === "loading") return;
 
-  const copyOrder = async () => {
-    const text = validateOrder();
-    if (!text) return;
-    showOrderPreview(text);
+    if (status !== "authenticated") {
+      toast.info("Iniciá sesión para agregar el pedido al carrito");
+      return router.push("/login?redirect=/catalogo-pedido");
+    }
+
+    setLoading(true);
     try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Pedido copiado. Pegalo en WhatsApp.");
-    } catch {
-      toast.info("Seleccioná el texto de abajo y copiá.", { autoClose: 8000 });
-    }
-  };
+      const { data } = await axios.post("/api/cart/import-order", {
+        text: formatOrderMessageFromMap(quantities),
+        mode: "merge",
+        existingCartItems: cartItems.map((item) => ({
+          _id: item._id,
+          slug: item.slug,
+          quantity: item.quantity,
+        })),
+      });
 
-  const shareOrder = async () => {
-    const text = validateOrder();
-    if (!text) return;
-    showOrderPreview(text);
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({ title: "Pedido OB", text });
-        toast.success("Pedido listo para enviar.");
-        return;
-      } catch (err) {
-        if (err?.name === "AbortError") return;
+      if (data.cartItems.length > 0) {
+        dispatch({
+          type: "CART_IMPORT_ITEMS",
+          payload: { items: data.cartItems },
+        });
       }
+
+      showImportToasts(data.summary);
+
+      if (data.summary.addedCount > 0) {
+        setAddedCount(data.summary.addedCount);
+        setQuantities({});
+      }
+    } catch (err) {
+      toast.error(getError(err));
+    } finally {
+      setLoading(false);
     }
-    await copyOrder();
   };
 
   if (availableProducts.length === 0) {
@@ -105,8 +118,9 @@ export default function CatalogPedidoScreen({ products, initialScope = "todos" }
   return (
     <div className="pb-44">
       <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
-        <strong>Catálogo para pedidos.</strong> Completá <strong>Cant.</strong>,
-        tocá <strong>Copiar pedido</strong> y enviá el texto por WhatsApp.
+        <strong>Pedido rápido.</strong> Completá <strong>Cant.</strong> en los
+        productos que quieras y tocá{" "}
+        <strong>Agregar al carrito</strong>.
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-600">
@@ -192,34 +206,41 @@ export default function CatalogPedidoScreen({ products, initialScope = "todos" }
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] dark:border-gray-700 dark:bg-gray-900">
-        <button
-          type="button"
-          onClick={shareOrder}
-          className="mb-2 w-full rounded-xl bg-[#128c7e] py-3.5 text-base font-bold text-white"
-        >
-          Compartir pedido en WhatsApp
-        </button>
-        <button
-          type="button"
-          onClick={copyOrder}
-          className="w-full rounded-xl bg-gray-900 py-3.5 text-base font-bold text-white dark:bg-gray-100 dark:text-gray-900"
-        >
-          Copiar pedido para WhatsApp
-        </button>
-        {orderPreview ? (
-          <div className="mt-3">
-            <p className="mb-1 text-xs text-gray-600 dark:text-gray-400">
-              Texto del pedido:
-            </p>
-            <textarea
-              readOnly
-              value={orderPreview}
-              rows={5}
-              onFocus={(e) => e.target.select()}
-              className="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 font-mono text-sm dark:border-gray-600 dark:bg-gray-800"
-            />
+        {addedCount > 0 ? (
+          <div className="mb-3 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-900 dark:border-green-800 dark:bg-green-950/40 dark:text-green-100">
+            <span className="flex-1">
+              {addedCount} producto{addedCount === 1 ? "" : "s"} agregado
+              {addedCount === 1 ? "" : "s"} al carrito.{" "}
+              <Link
+                href="/cart"
+                className="font-semibold text-green-900 underline hover:text-green-700 dark:text-green-100 dark:hover:text-white"
+              >
+                Ver carrito
+              </Link>
+            </span>
+            <button
+              type="button"
+              onClick={() => setAddedCount(0)}
+              aria-label="Cerrar aviso"
+              title="Cerrar"
+              className="shrink-0 rounded-md p-1 text-green-800 transition-colors hover:bg-green-100 dark:text-green-200 dark:hover:bg-green-900/60"
+            >
+              <XMarkIcon className="h-5 w-5" aria-hidden />
+            </button>
           </div>
         ) : null}
+        <button
+          type="button"
+          onClick={addToCartHandler}
+          disabled={loading || status === "loading"}
+          aria-busy={loading}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#128c7e] py-3.5 text-base font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <ShoppingCartIcon className="h-5 w-5 shrink-0" aria-hidden />
+          {loading
+            ? "Agregando…"
+            : `Agregar al carrito${selectedCount > 0 ? ` (${selectedCount})` : ""}`}
+        </button>
       </div>
     </div>
   );

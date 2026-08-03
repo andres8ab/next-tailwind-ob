@@ -1,4 +1,10 @@
 import { useRouter } from "next/router";
+import {
+  MagnifyingGlassIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 const { default: axios } = require("axios");
 const { default: Link } = require("next/link");
 const { useReducer, useEffect, useState } = require("react");
@@ -36,6 +42,7 @@ function reducer(state, action) {
 function AdminUsersScreen() {
   const router = useRouter();
   const [sortOrder, setSortOrder] = useState("asc"); // 'asc' or 'desc'
+  const [filterQuery, setFilterQuery] = useState("");
   const [
     { loading, error, users, successDelete, loadingCreate, loadingDelete },
     dispatch,
@@ -45,7 +52,24 @@ function AdminUsersScreen() {
     error: "",
   });
 
-  const sortedUsers = [...users].sort(function (a, b) {
+  const q = filterQuery.trim().toLowerCase();
+  const filteredUsers =
+    q.length === 0
+      ? users
+      : users.filter((u) => {
+          const name = (u.name || "").toLowerCase();
+          const username = (u.username || "").toLowerCase();
+          const seller = String(u.seller ?? "").toLowerCase();
+          const id = String(u._id || "").toLowerCase();
+          return (
+            name.includes(q) ||
+            username.includes(q) ||
+            seller.includes(q) ||
+            id.includes(q)
+          );
+        });
+
+  const sortedUsers = [...filteredUsers].sort(function (a, b) {
     const comparison = a.name.localeCompare(b.name, undefined, {
       sensitivity: "base",
     });
@@ -126,15 +150,55 @@ function AdminUsersScreen() {
           </ul>
         </div>
         <div className="overflow-x-auto md:col-span-3">
-          <h1 className="mb-4 text-xl">Usuarios</h1>
-          {loadingDelete && <div>Eliminando...</div>}
-          <button
-            disabled={loadingCreate}
-            onClick={createHandler}
-            className="primary-button"
-          >
-            {loadingCreate ? "Cargando" : "Crear"}
-          </button>
+          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 max-w-xl flex-1">
+              <h1 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Usuarios
+              </h1>
+              <label htmlFor="admin-user-filter" className="sr-only">
+                Filtrar usuarios
+              </label>
+              <div className="relative">
+                <MagnifyingGlassIcon
+                  className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                  aria-hidden
+                />
+                <input
+                  id="admin-user-filter"
+                  type="search"
+                  autoComplete="off"
+                  placeholder="Buscar por nombre, usuario, vendedor o ID…"
+                  value={filterQuery}
+                  onChange={(e) => setFilterQuery(e.target.value)}
+                  className="w-full border-gray-200 py-2.5 pl-10 pr-10 shadow-sm dark:border-gray-600"
+                />
+                {filterQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => setFilterQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-600 dark:hover:text-gray-200"
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <XMarkIcon className="h-5 w-5" aria-hidden />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-3 self-start">
+              {loadingDelete && (
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Eliminando item...
+                </span>
+              )}
+              <button
+                disabled={loadingCreate}
+                onClick={createHandler}
+                className="primary-button"
+              >
+                {loadingCreate ? "Cargando" : "Crear"}
+              </button>
+            </div>
+          </div>
           {loading ? (
             <div>Cargando...</div>
           ) : error ? (
@@ -204,21 +268,25 @@ function AdminUsersScreen() {
                       <td className="p-5">{user.clientDiscount}</td>
                       <td className="p-5">{user.isClient ? "SI" : "NO"}</td>
                       <td className="p-5">
-                        <Link
-                          href={`/admin/user/${user._id}`}
-                          type="button"
-                          className="default-button"
-                        >
-                          Editar
-                        </Link>
-                        &nbsp;
-                        <button
-                          type="button"
-                          className="default-button"
-                          onClick={() => deleteHandler(user._id)}
-                        >
-                          Eliminar
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/admin/user/${user._id}`}
+                            className="icon-button"
+                            aria-label="Editar usuario"
+                            title="Editar"
+                          >
+                            <PencilSquareIcon className="h-5 w-5" aria-hidden />
+                          </Link>
+                          <button
+                            type="button"
+                            className="icon-button-danger"
+                            aria-label="Eliminar usuario"
+                            title="Eliminar"
+                            onClick={() => deleteHandler(user._id)}
+                          >
+                            <TrashIcon className="h-5 w-5" aria-hidden />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

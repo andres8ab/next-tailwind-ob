@@ -4,6 +4,7 @@ import React, { useEffect, useReducer } from 'react'
 import Layout from '@/components/Layout'
 import { getError } from '@/utils/error'
 import { toast } from 'react-toastify'
+import { EyeIcon, TrashIcon } from '@heroicons/react/24/outline'
 
 function reducer(state, action) {
   switch (action.type) {
@@ -135,11 +136,25 @@ export default function AdminOrderScreen() {
                           : 'no entregada'}
                       </td>
                       <td className="p-5">
-                        <Link href={`/order/${order._id}`}>Detalles</Link>
-                        &nbsp;
-                        <button onClick={() => deleteHandler(order._id)}>
-                          Eliminar
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/order/${order._id}`}
+                            className="icon-button"
+                            aria-label="Ver detalles de la orden"
+                            title="Detalles"
+                          >
+                            <EyeIcon className="h-5 w-5" aria-hidden />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => deleteHandler(order._id)}
+                            className="icon-button-danger"
+                            aria-label="Eliminar orden"
+                            title="Eliminar"
+                          >
+                            <TrashIcon className="h-5 w-5" aria-hidden />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

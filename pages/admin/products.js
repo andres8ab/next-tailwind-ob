@@ -5,6 +5,12 @@ import Layout from "@/components/Layout";
 import { getError } from "@/utils/error";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
+import {
+  MagnifyingGlassIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
 function reducer(state, action) {
   switch (action.type) {
@@ -153,21 +159,10 @@ export default function AdminProductsScreen() {
                 Filtrar productos
               </label>
               <div className="relative">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
+                <MagnifyingGlassIcon
                   className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
                   aria-hidden
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                />
                 <input
                   id="admin-product-filter"
                   type="search"
@@ -184,20 +179,7 @@ export default function AdminProductsScreen() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-600 dark:hover:text-gray-200"
                     aria-label="Limpiar búsqueda"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <XMarkIcon className="h-5 w-5" aria-hidden />
                   </button>
                 ) : null}
               </div>
@@ -282,17 +264,25 @@ export default function AdminProductsScreen() {
                       <td className="p-5">{product.category}</td>
                       <td className="p-5">{product.countInStock}</td>
                       <td className="p-5">
-                        <Link href={`/admin/product/${product._id}`}>
-                          Editar
-                        </Link>
-                        &nbsp;
-                        <button
-                          onClick={() => deleteHandler(product._id)}
-                          className="default-button"
-                          type="button"
-                        >
-                          Eliminar
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/admin/product/${product._id}`}
+                            className="icon-button"
+                            aria-label="Editar producto"
+                            title="Editar"
+                          >
+                            <PencilSquareIcon className="h-5 w-5" aria-hidden />
+                          </Link>
+                          <button
+                            onClick={() => deleteHandler(product._id)}
+                            className="icon-button-danger"
+                            type="button"
+                            aria-label="Eliminar producto"
+                            title="Eliminar"
+                          >
+                            <TrashIcon className="h-5 w-5" aria-hidden />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

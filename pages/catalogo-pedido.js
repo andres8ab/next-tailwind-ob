@@ -3,9 +3,9 @@ import Layout from "@/components/Layout";
 import Product from "@/models/Product";
 import db from "@/utils/db";
 
-export default function CatalogoPedidoPage({ products, scope }) {
+export default function CatalogoPedidoPage({ products }) {
   return (
-    <Layout title="Catálogo — pedido">
+    <Layout title="Pedido rápido">
       <div className="mx-auto max-w-4xl px-3 pt-4">
         <h1 className="mb-1 text-center text-lg font-bold text-gray-900 dark:text-gray-100">
           Catálogo de productos
@@ -17,21 +17,19 @@ export default function CatalogoPedidoPage({ products, scope }) {
             year: "numeric",
           })}
         </p>
-        <CatalogPedidoScreen products={products} initialScope={scope} />
+        <CatalogPedidoScreen products={products} />
       </div>
     </Layout>
   );
 }
 
-export async function getServerSideProps({ query }) {
-  const scope = query.scope === "ob" ? "ob" : "todos";
+export async function getServerSideProps() {
   await db.connect();
   const products = await Product.find().sort({ slug: 1 }).lean();
   await db.disconnect();
   return {
     props: {
       products: products.map(db.convertDocToObj),
-      scope,
     },
   };
 }
