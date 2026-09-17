@@ -7,23 +7,10 @@ import React, { useEffect, useReducer, useState } from "react";
 import Layout from "@/components/Layout";
 import { getError } from "@/utils/error";
 import { toast } from "react-toastify";
-import MercadoPagoButton from "@/components/MercadoPagoButton";
-import { TruckIcon } from "@heroicons/react/24/outline";
-
-const ENVIA_USUARIO = "3406795";
-const ENVIA_GUIA_URL =
-  "https://hub.envia.co/2impresionguias/ISticker10_15COCE.aspx";
-
-function enviaGuiaHref(guia) {
-  if (guia == null || guia === "") return "";
-  const g = String(guia).trim();
-  if (!g) return "";
-  const params = new URLSearchParams({
-    Guia: g,
-    usuario: ENVIA_USUARIO,
-  });
-  return `${ENVIA_GUIA_URL}?${params.toString()}`;
-}
+// La card de Método Pago está comentada mas abajo, por eso tambien lo esta su import.
+// import MercadoPagoButton from "@/components/MercadoPagoButton";
+import { PencilSquareIcon, TruckIcon } from "@heroicons/react/24/outline";
+import { enviaGuiaHref } from "@/utils/envia";
 // import { initMercadoPago, Wallet } from '@mercadopago/sdk-react';
 
 function reducer(state, action) {
@@ -81,15 +68,16 @@ function OrderScreen() {
   }, [order._id, orderId, successDeliver]);
   const {
     shippingAddress,
-    paymentMethod,
+    // paymentMethod, isPaid y paidAt solo los usaba la card de Método Pago (comentada).
+    // paymentMethod,
     orderItems,
     itemsPrice,
     discountPrice,
     taxPrice,
     shippingPrice,
     totalPrice,
-    isPaid,
-    paidAt,
+    // isPaid,
+    // paidAt,
     isDelivered,
     deliveredAt,
   } = order;
@@ -97,8 +85,19 @@ function OrderScreen() {
   const enviaTrackingUrl = enviaGuiaHref(deliveredAt);
 
   const [inputValue, setInputValue] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
   const handleChange = (event) => {
     setInputValue(event.target.value);
+  };
+
+  const startEditing = () => {
+    setInputValue(deliveredAt ?? "");
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setInputValue("");
+    setIsEditing(false);
   };
 
   async function deliverOrderHandler() {
@@ -109,12 +108,44 @@ function OrderScreen() {
         { inputValue },
       );
       dispatch({ type: "DELIVER_SUCCESS", payload: data });
+      setIsEditing(false);
       toast.success("Orden entregada");
     } catch (err) {
-      dispatch({ type: "FETCH_FAIL", payload: getError(err) });
+      dispatch({ type: "DELIVER_FAIL" });
       toast.error(getError(err));
     }
   }
+
+  // Mismo par input + boton para crear y para corregir la guia.
+  const guiaForm = (
+    <div className="mt-3 flex flex-wrap items-center gap-3">
+      {loadingDeliver && <div>Cargando...</div>}
+      <input
+        type="text"
+        value={inputValue}
+        onChange={handleChange}
+        placeholder="Guia #"
+        className="input bg-teal-600/50 input-bordered input-accent w-full max-w-xs"
+      />
+      <button
+        className="btn btn-accent"
+        onClick={deliverOrderHandler}
+        disabled={loadingDeliver}
+      >
+        {isEditing ? "Guardar" : "Enviar"}
+      </button>
+      {isEditing && (
+        <button
+          type="button"
+          className="default-button"
+          onClick={cancelEditing}
+          disabled={loadingDeliver}
+        >
+          Cancelar
+        </button>
+      )}
+    </div>
+  );
 
   // const createPreference = async () => {
   //   try {
@@ -154,48 +185,46 @@ function OrderScreen() {
                 {shippingAddress.address}, {shippingAddress.city}
               </div>
               {isDelivered ? (
-                <div className="alert-success flex flex-wrap items-center gap-3">
-                  <span>
-                    Entregado con el Numero de Guia:{" "}
-                    <span className="font-semibold">{deliveredAt}</span>
-                  </span>
-                  {enviaTrackingUrl ? (
-                    <a
-                      href={enviaTrackingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Ver guía en Envia"
-                      aria-label="Abrir etiqueta de guía Envia en una nueva pestaña"
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-green-700/20 bg-white/85 !no-underline shadow-sm !text-green-800 transition-colors hover:border-green-700/35 hover:bg-white hover:!text-green-900 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600/35 dark:border-green-600/35 dark:bg-green-950/50 dark:!text-green-200 dark:hover:border-green-500/50 dark:hover:bg-green-950/70 dark:hover:!text-green-100 dark:focus-visible:ring-green-400/30"
-                    >
-                      <TruckIcon className="h-5 w-5" aria-hidden />
-                    </a>
-                  ) : null}
+                <div>
+                  <div className="alert-success flex flex-wrap items-center gap-3">
+                    <span>
+                      Entregado con el Numero de Guia:{" "}
+                      <span className="font-semibold">{deliveredAt}</span>
+                    </span>
+                    {enviaTrackingUrl ? (
+                      <a
+                        href={enviaTrackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Ver guía en Envia"
+                        aria-label="Abrir etiqueta de guía Envia en una nueva pestaña"
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-green-700/20 bg-white/85 !no-underline shadow-sm !text-green-800 transition-colors hover:border-green-700/35 hover:bg-white hover:!text-green-900 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600/35 dark:border-green-600/35 dark:bg-green-950/50 dark:!text-green-200 dark:hover:border-green-500/50 dark:hover:bg-green-950/70 dark:hover:!text-green-100 dark:focus-visible:ring-green-400/30"
+                      >
+                        <TruckIcon className="h-5 w-5" aria-hidden />
+                      </a>
+                    ) : null}
+                    {session.user.isAdmin && !isEditing && (
+                      <button
+                        type="button"
+                        onClick={startEditing}
+                        className="icon-button shrink-0"
+                        title="Editar guía"
+                        aria-label="Editar el número de guía"
+                      >
+                        <PencilSquareIcon className="h-5 w-5" aria-hidden />
+                      </button>
+                    )}
+                  </div>
+                  {session.user.isAdmin && isEditing && guiaForm}
                 </div>
               ) : (
                 <div>
                   <div className="alert-error">No Entregado</div>
-                  {session.user.isAdmin && !order.isDelivered && (
-                    <li>
-                      {loadingDeliver && <div>Cargando...</div>}
-                      <input
-                        type="text"
-                        value={inputValue}
-                        onChange={handleChange}
-                        placeholder="Guia #"
-                        className="input bg-teal-600/50 input-bordered input-accent w-full max-w-xs mr-3"
-                      />
-                      <button
-                        className="btn btn-accent"
-                        onClick={deliverOrderHandler}
-                      >
-                        Enviar
-                      </button>
-                    </li>
-                  )}
+                  {session.user.isAdmin && guiaForm}
                 </div>
               )}
             </div>
+            {/* Card de Método Pago desactivada: no la estamos usando.
             <div className="card p-5">
               <h2 className="mb-2 text-lg">Método Pago</h2>
               <div>{paymentMethod}</div>
@@ -205,17 +234,10 @@ function OrderScreen() {
                 <div>
                   <div className="alert-error">No Pagado</div>
                   <MercadoPagoButton product={order} />
-                  {/* <button className="alert-pay" onClick={handleBuy}>
-                    Pagar
-                  </button> */}
-                  {/* {preferenceId && (
-                    <Wallet
-                      initialization={{ preferenceId, redirectMode: 'modal' }}
-                    />
-                  )} */}
                 </div>
               )}
             </div>
+            */}
             <div className="card overflow-x-auto p-5">
               <h2 className="mb-2 text-lg">Enviar Orden</h2>
               <table className="min-w-full">
